@@ -9,6 +9,18 @@ Autonomous trading bot platform for **DeepBook Predict** on Sui blockchain.
 PredictBot is a SaaS platform that lets users deploy capital into automated prediction market strategies on DeepBook Predict. Users select a strategy, deposit funds, and the bot handles execution, risk management, and reporting — all running on self-hosted infrastructure for low-latency execution.
 
 ## 🏗 Architecture
+
+[ User Dashboard ]
+        |
+        v
+[ Strategy Engine (Rust + Tokio) ]
+        |
+        v
+[ DeepBook Predict Integration Layer ]
+        |
+        v
+[ Self-hosted Sui Full Node ]
+
 ## 🛠 Tech Stack
 
 - **Language:** Rust + Move
