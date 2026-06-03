@@ -10,11 +10,9 @@
 
 ### Math
 - SVI: `w(k) = a + b * (rho*(k-m) + sqrt((k-m)^2 + sigma^2))`
-  - integer-to-f64 with signed rho/m
-  - clamped non-negative
 - Binary pricing (log-normal): `P(S_T > K) = N(d2)`, `d2 = (ln(F/K) - w/2) / sqrt(w)`
 - Strike grid: forward rounded to tick, ATM ± N ticks, per-strike fair UP/DOWN
-- 10 unit tests passing (SVI symmetry, ATM ≈ 0.5, ITM/OTM extremes, call+put = 1)
+- 10 unit tests passing (SVI symmetry, ATM ~ 0.5, ITM/OTM extremes, call+put = 1)
 
 ### Live data verified (testnet)
 - 18 active BTC oracles, ~15 min cadence

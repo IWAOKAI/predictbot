@@ -1,5 +1,17 @@
 # Day 2 plan — 2026-06-04
 
+## 🎬 First thing tomorrow: Watch the workshop
+
+**"How to Trade on DeepBook Predict"** (official Sui Overflow workshop)
+URL: https://youtu.be/GncjVUEJw9Y
+
+Notes to take while watching:
+- [ ] How does the official workshop describe the user flow?
+- [ ] Any API endpoints or arguments I missed?
+- [ ] What does Mysten Labs emphasize as UX priorities?
+- [ ] Any hints about mainnet timeline?
+- [ ] Anything that contradicts my current DeepEdge design?
+
 ## Priority 1: True Edge = fair − market
 Goal: each strike shows +EV/-EV vs actual market ask.
 
@@ -22,6 +34,10 @@ Goal: collapse per-strike EV into a single per-oracle "best edge available" numb
 ## Priority 4 (stretch): Frontend scaffold
 - `frontend/` Next.js 14 App Router.
 - Tailwind, @mysten/dapp-kit, basic Markets List page consuming /api/markets.
+
+## Other workshops noted
+- OpenZeppelin Secure Move Patterns: June 5, 16:00 UTC (June 6, 01:00 JST). Skip live, wait for recording.
+- Walrus Memory / Harbor: not relevant to DeepEdge.
 
 ## Open questions
 - ask_bounds returns null on fresh oracles. When does it populate?
