@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use deepedge::api::{AppState, list_markets};
+use deepedge::api::{AppState, list_markets, get_market};
 use deepedge::client::PredictServerClient;
 
 #[derive(Serialize)]
@@ -46,6 +46,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(root))
         .route("/health", get(health))
         .route("/api/markets", get(list_markets))
+        .route("/api/markets/:oracle_id", get(get_market))
         .fallback(fallback)
         .with_state(state);
 

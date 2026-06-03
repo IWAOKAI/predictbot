@@ -1,3 +1,3 @@
 pub mod markets;
 
-pub use markets::{AppState, list_markets};
+pub use markets::{AppState, list_markets, get_market};
