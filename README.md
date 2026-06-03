@@ -1,32 +1,68 @@
-# PredictBot 🤖
+# DeepEdge 🎯
 
-Autonomous trading bot platform for **DeepBook Predict** on Sui blockchain.
+**Don't Bet Blind. See the Edge.**
+
+A data-driven prediction market platform on DeepBook Predict (Sui).
 
 > 🏆 Submission for [Sui Overflow 2026](https://overflow.sui.io/) — DeepBook Track
 
 ## 🎯 What It Does
 
-PredictBot is a SaaS platform that lets users deploy capital into automated prediction market strategies on DeepBook Predict. Users select a strategy, deposit funds, and the bot handles execution, risk management, and reporting — all running on self-hosted infrastructure for low-latency execution.
+DeepEdge empowers users to make informed bets on DeepBook Predict by surfacing the statistical edge of each prediction market. Instead of blind speculation or copy-trading, users see:
+
+- Historical hit rates for similar conditions
+- Oracle volatility analysis
+- Liquidity depth metrics
+- A clear Edge Score (0-100%) for each market
+
+Users then make one-tap bets with full context — winning through intelligence, not luck.
+
+## 🧠 Why DeepEdge?
+
+Most DeFi tools turn users into passive participants:
+- Bots that auto-trade for you (you lose when they lose)
+- Copy-trading platforms (you blindly follow others)
+- Yield farms (returns vanish over time)
+
+DeepEdge takes a different approach: **arm users with information so they win through their own judgment**.
 
 ## 🏗 Architecture
 
-[ User Dashboard ]
+```
+[ User Wallet (Sui) ]
         |
         v
-[ Strategy Engine (Rust + Tokio) ]
+[ DeepEdge Web App (Next.js) ]
         |
         v
-[ DeepBook Predict Integration Layer ]
+[ Edge Score Engine (Rust + Tokio) ]
         |
         v
 [ Self-hosted Sui Full Node ]
+        |
+        v
+[ DeepBook Predict ]
+```
 
 ## 🛠 Tech Stack
 
-- **Language:** Rust + Move
-- **Async:** Tokio
-- **Blockchain:** Sui (DeepBook Predict)
-- **Infrastructure:** Self-hosted Sui full node
+- **Frontend:** Next.js 14, TailwindCSS, @mysten/dapp-kit
+- **Backend:** Rust, Tokio, Axum
+- **Smart Contracts:** Move (Sui)
+- **Infrastructure:** Self-hosted Sui full node (1.8TB / 125GB RAM)
+- **Data:** SQLite for historical market analysis
+
+## 🎯 Edge Score Calculation
+
+The core differentiator of DeepEdge is the Edge Score, calculated in real-time from:
+
+- **Historical hit rate** (30%): Past performance under similar conditions
+- **Oracle volatility** (25%): Asset price movement analysis
+- **Liquidity depth** (15%): Market thickness and reliability
+- **Time to expiry** (15%): Time decay considerations
+- **Odds advantage** (15%): Current odds vs historical fair value
+
+Edge Scores are computed using data streamed directly from a self-hosted Sui node, giving DeepEdge users a latency advantage over public RPC users.
 
 ## 🔬 Status
 
@@ -34,13 +70,13 @@ PredictBot is a SaaS platform that lets users deploy capital into automated pred
 
 ### Development Phases
 
-- **Phase 1** (Week 1): DeepBook Predict integration, core engine
-- **Phase 2** (Week 2): Multi-strategy framework, UI
+- **Phase 1** (Week 1): DeepBook Predict data layer, Edge Score engine
+- **Phase 2** (Week 2): Frontend, wallet integration, one-tap betting
 - **Phase 3** (Week 3): Polish, mainnet readiness, submission
 
 ## 🎓 Background
 
-This project leverages infrastructure knowledge from prior work on Sui DeFi automation. The DeepBook Predict integration, strategy framework, user-facing platform, and Move contracts are all new development for Sui Overflow 2026.
+This project leverages infrastructure knowledge from prior work on Sui DeFi automation, including a custom Sui full node operation running since DeepBook Predict's testnet launch. The Edge Score engine, frontend, betting logic, and Move contracts are all new development for Sui Overflow 2026.
 
 ## 📝 Author
 
