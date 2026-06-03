@@ -1,13 +1,15 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::StatusCode,
     Json,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use crate::client::PredictServerClient;
-use crate::engine::{compute_edge_score, EdgeScore};
+use crate::engine::{
+    compute_edge_score, compute_strike_grid, EdgeScore, StrikeGrid,
+};
 use crate::types::{Oracle, OracleState};
 
 const PREDICT_ID: &str = "0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a";
@@ -64,6 +66,20 @@ pub struct MarketDetailResponse {
     pub forward_usd: Option<f64>,
     pub seconds_until_expiry: i64,
     pub edge_score: Option<EdgeScore>,
+}
+
+#[derive(Serialize)]
+pub struct StrikesResponse {
+    pub oracle: MarketSummary,
+    pub grid: Option<StrikeGrid>,
+}
+
+#[derive(Deserialize)]
+pub struct StrikesQuery {
+    /// 表示するストライク数（デフォルト 11、奇数推奨）
+    pub num: Option<usize>,
+    /// ストライク間隔（tick の倍数。デフォルト 50 = $50 刻み）
+    pub step: Option<i64>,
 }
 
 pub async fn list_markets(
@@ -123,5 +139,38 @@ pub async fn get_market(
         forward_usd: oracle_state.latest_price.as_ref().map(|p| p.forward_usd()),
         seconds_until_expiry: oracle_state.oracle.seconds_until_expiry(now_ms),
         edge_score,
+    }))
+}
+
+pub async fn get_strikes(
+    State(state): State<AppState>,
+    Path(oracle_id): Path<String>,
+    Query(q): Query<StrikesQuery>,
+) -> Result<Json<StrikesResponse>, (StatusCode, String)> {
+    let oracle_state: OracleState = state
+        .predict_client
+        .oracle_state(&oracle_id)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    let num_strikes = q.num.unwrap_or(11);
+    let step_ticks = q.step.unwrap_or(50);
+    let now_ms = chrono::Utc::now().timestamp_millis();
+
+    let grid = match (&oracle_state.latest_price, &oracle_state.latest_svi) {
+        (Some(price), Some(svi)) => Some(compute_strike_grid(
+            &oracle_state.oracle,
+            price,
+            svi,
+            now_ms,
+            num_strikes,
+            step_ticks,
+        )),
+        _ => None,
+    };
+
+    Ok(Json(StrikesResponse {
+        oracle: MarketSummary::from(&oracle_state.oracle),
+        grid,
     }))
 }
