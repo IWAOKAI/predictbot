@@ -5,6 +5,10 @@ use axum::{
 };
 use serde::Serialize;
 use std::net::SocketAddr;
+use std::sync::Arc;
+
+use deepedge::api::{AppState, list_markets};
+use deepedge::client::PredictServerClient;
 
 #[derive(Serialize)]
 struct StatusResponse {
@@ -35,10 +39,15 @@ async fn fallback() -> (StatusCode, &'static str) {
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
+    let predict_client = Arc::new(PredictServerClient::new()?);
+    let state = AppState { predict_client };
+
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health))
-        .fallback(fallback);
+        .route("/api/markets", get(list_markets))
+        .fallback(fallback)
+        .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
     let listener = tokio::net::TcpListener::bind(addr).await?;
