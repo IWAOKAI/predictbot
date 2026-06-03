@@ -87,3 +87,17 @@ This project leverages infrastructure knowledge from prior work on Sui DeFi auto
 ## 📄 License
 
 MIT
+
+## 🔌 Live API Endpoints (Day 1)
+
+Running on port 3000:
+
+- `GET /` — banner
+- `GET /health` — service info JSON
+- `GET /api/markets` — list of all DeepBook Predict BTC oracles
+- `GET /api/markets/:oracle_id` — oracle detail with v1 Edge Score
+- `GET /api/markets/:oracle_id/strikes?num=11&step=50` — per-strike fair UP/DOWN probabilities from SVI smile
+
+Built on:
+- Public Predict Server (testnet): `https://predict-server.testnet.mystenlabs.com`
+- SVI total-variance model + log-normal binary pricing
