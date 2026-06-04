@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, MarketSummary } from "@/lib/api";
 
 function timeUntil(expiryMs: number): string {
@@ -83,7 +84,11 @@ export default function MarketsPage() {
 
 function MarketCard({ market }: { market: MarketSummary }) {
   return (
-    <div className="card" style={{ padding: 20 }}>
+    <Link
+      href={`/market/${market.oracle_id}`}
+      style={{ textDecoration: "none", color: "inherit" }}
+    >
+    <div className="card" style={{ padding: 20, cursor: "pointer" }}>
       <div
         style={{
           display: "flex",
@@ -125,6 +130,7 @@ function MarketCard({ market }: { market: MarketSummary }) {
         {market.oracle_id.slice(0, 18)}…
       </div>
     </div>
+    </Link>
   );
 }
 

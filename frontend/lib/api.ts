@@ -54,7 +54,79 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json();
 }
 
+
+// --- Strike grid (single market detail) ---
+
+export interface StrikeRow {
+  strike_usd: number;
+  log_moneyness: number;
+  total_variance: number;
+  implied_vol_annualized: number;
+  fair_up: number;
+  fair_down: number;
+}
+
+export interface StrikeGrid {
+  spot_usd: number;
+  forward_usd: number;
+  seconds_until_expiry: number;
+  atm_strike_usd: number;
+  strikes: StrikeRow[];
+}
+
+export interface StrikesResponse {
+  oracle: MarketSummary;
+  grid: StrikeGrid;
+}
+
+// --- Edge grid (fair vs market) ---
+
+export type EdgeSignal = "no_data" | "buy" | "avoid" | "neutral";
+
+export interface DirectionalEdge {
+  fair: number;
+  market_ask: number | null;
+  ev: number | null;
+  signal: EdgeSignal;
+  market_ts_ms: number | null;
+}
+
+export interface StrikeEdge {
+  strike_usd: number;
+  log_moneyness: number;
+  implied_vol_annualized: number | null;
+  up: DirectionalEdge;
+  down: DirectionalEdge;
+}
+
+export interface BestEdge {
+  strike_usd: number;
+  direction: string;
+  fair: number;
+  market_ask: number;
+  ev: number;
+}
+
+export interface EdgeGrid {
+  spot_usd: number;
+  forward_usd: number;
+  seconds_until_expiry: number;
+  atm_strike_usd: number;
+  market_data_points: number;
+  best_edge: BestEdge | null;
+  strikes: StrikeEdge[];
+}
+
+export interface EdgesResponse {
+  oracle: MarketSummary;
+  edge_grid: EdgeGrid | null;
+}
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
+  strikes: (oracleId: string) =>
+    getJson<StrikesResponse>(`/api/markets/${oracleId}/strikes?num=15&step=50`),
+  edges: (oracleId: string) =>
+    getJson<EdgesResponse>(`/api/markets/${oracleId}/edges?num=15&step=50`),
 };
