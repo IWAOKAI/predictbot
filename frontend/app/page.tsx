@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { api, MarketSummary } from "@/lib/api";
 
 function timeUntil(expiryMs: number): string {
@@ -33,21 +34,33 @@ export default function MarketsPage() {
 
   return (
     <div>
-      <div style={{ marginBottom: 28 }}>
-        <h1
-          style={{
-            fontSize: 32,
-            fontWeight: 800,
-            margin: "0 0 6px",
-            letterSpacing: "-0.02em",
-            color: "var(--primary-dark)",
-          }}
-        >
-          Don&apos;t Bet Blind. See the Math.
-        </h1>
-        <p style={{ color: "var(--text-muted)", margin: 0, fontSize: 15 }}>
-          Live DeepBook Predict markets, priced against an SVI fair-value model.
-        </p>
+      <div
+        style={{
+          marginBottom: 28,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 16,
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <h1
+            style={{
+              fontSize: 32,
+              fontWeight: 800,
+              margin: "0 0 6px",
+              letterSpacing: "-0.02em",
+              color: "var(--primary-dark)",
+            }}
+          >
+            Don&apos;t Bet Blind. See the Math.
+          </h1>
+          <p style={{ color: "var(--text-muted)", margin: 0, fontSize: 15 }}>
+            Live DeepBook Predict markets, priced against an SVI fair-value model.
+          </p>
+        </div>
+        <WalletBar />
       </div>
 
       {loading && <LoadingState />}
@@ -146,6 +159,26 @@ function Row({ label, value }: { label: string; value: string }) {
     >
       <span style={{ color: "var(--text-muted)" }}>{label}</span>
       <span style={{ fontWeight: 600 }}>{value}</span>
+    </div>
+  );
+}
+
+function WalletBar() {
+  const account = useCurrentAccount();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+      <ConnectButton />
+      {account && (
+        <span
+          style={{
+            fontSize: 11,
+            color: "var(--text-muted)",
+            fontFamily: "ui-monospace, monospace",
+          }}
+        >
+          {account.address.slice(0, 10)}…{account.address.slice(-4)}
+        </span>
+      )}
     </div>
   );
 }

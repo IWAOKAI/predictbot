@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { ClientProviders } from "./client-providers";
 
 export const metadata: Metadata = {
   title: "DeepEdge — See the Math",
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ClientProviders>
         <header
           style={{
             borderBottom: "1px solid var(--border)",
@@ -48,7 +50,7 @@ export default function RootLayout({
             >
               Deep<span style={{ color: "var(--primary)" }}>Edge</span>
             </Link>
-            <nav style={{ display: "flex", gap: 24, fontSize: 14, fontWeight: 600 }}>
+            <nav style={{ display: "flex", gap: 24, fontSize: 14, fontWeight: 600, alignItems: "center" }}>
               <Link href="/" style={{ color: "var(--text)", textDecoration: "none" }}>
                 Markets
               </Link>
@@ -64,6 +66,7 @@ export default function RootLayout({
         <main style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
           {children}
         </main>
+        </ClientProviders>
       </body>
     </html>
   );
