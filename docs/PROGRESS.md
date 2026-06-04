@@ -60,3 +60,41 @@ Verified and documented rather than presented as predictive skill.
 - Frontend scaffold (Next.js) to visualize calibration + edge signals
 - The "UP over-priced at 40-50%" finding is the headline visual
 
+
+## Day 3 — 2026-06-05
+
+### Built
+- Wallet connection via @mysten/dapp-kit
+  - Providers (SuiClient + Wallet + QueryClient) loaded client-side
+    only via dynamic import (ssr: false) — avoids React Context SSR
+    crash in Next.js build
+  - ConnectButton + WalletBar (shows connected address) on markets page
+  - Verified: Slush wallet connects, address displays
+
+### Researched (betting flow groundwork)
+- mint tx is a 2-step PTB:
+  1. market_key::up/down(oracle_id: ID, expiry: u64, strike: u64) -> MarketKey
+  2. predict::mint<DUSDC>(Predict mut, PredictManager mut, OracleSVI ref,
+     MarketKey, quantity: u64, Clock ref, ctx)
+  - No explicit coin: payment is drawn from PredictManager's internal balance
+- PredictManager is a SHARED object with an `owner` field
+  - Discover via GET /managers?owner={address} -> returns manager_id
+  - count==0 means user needs to create one
+- Our testnet manager 0x870882... has balance_manager.balances.size=0
+  -> must deposit DUSDC before betting; positions.size=1 (the old -$0.90)
+
+### Remaining for full betting (next session, ~1 day)
+1. Backend endpoint to proxy /managers?owner=
+2. PredictManager discovery UI + "create manager" tx for new users
+3. DUSDC faucet/source investigation + deposit tx
+4. mint tx (2-step PTB) + sign/send/result
+5. Slush must be switched to TESTNET before any real bet
+
+### Tunnel stability note (IMPORTANT)
+Repeated "Too many open files" crashes came from stray SSH tunnels
+auto-retrying. Next time, on the Mac, use the SAFE tunnel command:
+  ssh -o ServerAliveInterval=60 -o ExitOnForwardFailure=yes -N \
+      -L 3001:localhost:3001 -L 3000:localhost:3000 root@SERVER
+The -N (no shell) and ExitOnForwardFailure=yes (fail fast on port
+conflict) prevent the runaway loop.
+
