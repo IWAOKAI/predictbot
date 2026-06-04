@@ -10,6 +10,7 @@ use std::sync::Arc;
 use deepedge::api::{AppState, list_markets, get_market, get_strikes, get_edges};
 use deepedge::api::backtest::{calibration, accuracy};
 use deepedge::client::PredictServerClient;
+use tower_http::cors::CorsLayer;
 
 #[derive(Serialize)]
 struct StatusResponse {
@@ -53,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/backtest/calibration", get(calibration))
         .route("/api/backtest/accuracy", get(accuracy))
         .fallback(fallback)
+        .layer(CorsLayer::permissive())
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));

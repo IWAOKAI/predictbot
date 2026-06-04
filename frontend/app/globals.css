@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #f0f9ff;
+  --surface: #ffffff;
+  --border: #bae6fd;
+  --primary: #0ea5e9;
+  --primary-dark: #0369a1;
+  --text: #0c4a6e;
+  --text-muted: #64748b;
+  --up: #10b981;
+  --down: #f43f5e;
+  --warn: #f59e0b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 30%, #ffffff 100%);
+  color: var(--text);
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  margin: 0;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(14, 165, 233, 0.08),
+    0 8px 24px rgba(14, 165, 233, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15),
+    0 12px 32px rgba(14, 165, 233, 0.1);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-settled {
+  background: #e2e8f0;
+  color: #475569;
+}
