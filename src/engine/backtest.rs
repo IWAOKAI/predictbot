@@ -15,7 +15,9 @@
 use std::collections::HashMap;
 use serde::Serialize;
 
-use crate::types::{Oracle, PositionMint};
+use crate::types::{Oracle, PositionMint, OracleSvi, OraclePrice};
+use crate::engine::svi::SviParams;
+use crate::engine::pricing::binary_call_probability;
 
 const PRICE_DECIMALS: f64 = 1e9;
 
@@ -163,6 +165,120 @@ pub fn run_calibration(oracles: &[Oracle], mints: &[PositionMint]) -> Calibratio
         overall_avg_roi,
         mean_abs_calibration_error,
         buckets,
+    }
+}
+
+
+/// DeepEdge の予測精度 vs 市場の予測精度（Brier Score 比較）
+#[derive(Debug, Clone, Serialize)]
+pub struct AccuracyReport {
+    pub bets_evaluated: usize,
+    /// 市場 ask（spread込み）を予測値とした Brier Score（低いほど正確）
+    pub market_brier: f64,
+    /// DeepEdge fair（満期直前SVI）を予測値とした Brier Score
+    pub deepedge_brier: f64,
+    /// DeepEdge が市場より正確だった割合（per-bet で |error| が小さかった率）
+    pub deepedge_more_accurate_rate: f64,
+    /// 改善率 = (market_brier - deepedge_brier) / market_brier
+    pub brier_improvement_pct: f64,
+    /// 注記
+    pub caveat: String,
+}
+
+/// 1つの mint に対して、市場予測と DeepEdge 予測の二乗誤差を出す
+struct AccuracySample {
+    market_sq_error: f64,
+    deepedge_sq_error: f64,
+}
+
+/// settled oracle の latest_svi と latest_price から、各 mint の予測精度を評価。
+/// svi/price が無い oracle はスキップ。
+fn evaluate_accuracy(
+    mint: &PositionMint,
+    settlement: i64,
+    svi: &OracleSvi,
+    price: &OraclePrice,
+) -> Option<AccuracySample> {
+    let implied = mint.ask_price as f64 / PRICE_DECIMALS;
+    if implied < 0.05 || implied > 0.95 {
+        return None;
+    }
+    let won = if mint.is_up {
+        settlement > mint.strike
+    } else {
+        settlement <= mint.strike
+    };
+    let outcome = if won { 1.0 } else { 0.0 };
+
+    // DeepEdge fair を SVI から計算
+    let svi_params = SviParams::from_event(svi);
+    let forward = price.forward_usd();
+    let strike_usd = mint.strike as f64 / PRICE_DECIMALS;
+    if forward <= 0.0 || strike_usd <= 0.0 {
+        return None;
+    }
+    let log_moneyness = (strike_usd / forward).ln();
+    let w = svi_params.total_variance(log_moneyness);
+    let fair_up = binary_call_probability(forward, strike_usd, w);
+    // mint の方向に合わせた DeepEdge 予測確率
+    let deepedge_prob = if mint.is_up { fair_up } else { 1.0 - fair_up };
+
+    let market_sq_error = (implied - outcome).powi(2);
+    let deepedge_sq_error = (deepedge_prob - outcome).powi(2);
+
+    Some(AccuracySample {
+        market_sq_error,
+        deepedge_sq_error,
+    })
+}
+
+/// market ask vs DeepEdge fair の予測精度を比較
+/// oracle_states: (oracle_id, settlement, svi, price) のタプル列が必要
+pub fn run_accuracy(
+    settlements: &std::collections::HashMap<String, (i64, OracleSvi, OraclePrice)>,
+    mints: &[PositionMint],
+) -> AccuracyReport {
+    let mut samples: Vec<AccuracySample> = Vec::new();
+    for m in mints {
+        if let Some((settlement, svi, price)) = settlements.get(&m.oracle_id) {
+            if let Some(s) = evaluate_accuracy(m, *settlement, svi, price) {
+                samples.push(s);
+            }
+        }
+    }
+
+    let n = samples.len();
+    if n == 0 {
+        return AccuracyReport {
+            bets_evaluated: 0,
+            market_brier: 0.0,
+            deepedge_brier: 0.0,
+            deepedge_more_accurate_rate: 0.0,
+            brier_improvement_pct: 0.0,
+            caveat: "no samples".to_string(),
+        };
+    }
+
+    let market_brier = samples.iter().map(|s| s.market_sq_error).sum::<f64>() / n as f64;
+    let deepedge_brier = samples.iter().map(|s| s.deepedge_sq_error).sum::<f64>() / n as f64;
+    let more_accurate = samples
+        .iter()
+        .filter(|s| s.deepedge_sq_error < s.market_sq_error)
+        .count();
+    let deepedge_more_accurate_rate = more_accurate as f64 / n as f64;
+    let brier_improvement_pct = if market_brier > 0.0 {
+        (market_brier - deepedge_brier) / market_brier * 100.0
+    } else {
+        0.0
+    };
+
+    AccuracyReport {
+        bets_evaluated: n,
+        market_brier,
+        deepedge_brier,
+        deepedge_more_accurate_rate,
+        brier_improvement_pct,
+        caveat: "LOOK-AHEAD BIAS: DeepEdge fair is computed from near-expiry SVI/forward (observed ~5s before settlement), while market ask reflects mint-time info (often tens of minutes earlier). The forward at T-5s is already ~99.9% of settlement, so this measures SVI internal consistency, NOT predictive skill. Do not cite as predictive superiority.".to_string(),
     }
 }
 
