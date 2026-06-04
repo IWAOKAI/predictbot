@@ -36,6 +36,14 @@ pub struct CalibrationBucket {
     pub calibration_gap: f64,
     /// このバケットを ask で全部買ったときの平均 ROI
     pub avg_roi: f64,
+    /// UP ベットのみの内訳
+    pub up_count: usize,
+    pub up_implied: f64,
+    pub up_actual: f64,
+    /// DOWN ベットのみの内訳
+    pub down_count: usize,
+    pub down_implied: f64,
+    pub down_actual: f64,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -55,6 +63,7 @@ struct EvaluatedBet {
     implied_prob: f64,
     won: bool,
     roi: f64,
+    is_up: bool,
 }
 
 /// settled oracle の settlement_price を引く索引を作る
@@ -86,7 +95,20 @@ fn evaluate_bet(mint: &PositionMint, settlement: i64) -> Option<EvaluatedBet> {
         implied_prob: implied,
         won,
         roi,
+        is_up: mint.is_up,
     })
+}
+
+/// 方向別の (件数, 平均implied, 実勝率) を返す
+fn direction_stats(bets: &[&&EvaluatedBet]) -> (usize, f64, f64) {
+    let n = bets.len();
+    if n == 0 {
+        return (0, 0.0, 0.0);
+    }
+    let implied = bets.iter().map(|b| b.implied_prob).sum::<f64>() / n as f64;
+    let wins = bets.iter().filter(|b| b.won).count();
+    let actual = wins as f64 / n as f64;
+    (n, implied, actual)
 }
 
 /// メインのバックテスト関数
@@ -122,6 +144,13 @@ pub fn run_calibration(oracles: &[Oracle], mints: &[PositionMint]) -> Calibratio
         let avg_roi = group.iter().map(|b| b.roi).sum::<f64>() / n as f64;
         let gap = win_rate - avg_implied;
         weighted_abs_error += gap.abs() * n as f64;
+
+        // 方向別の内訳
+        let ups: Vec<&&EvaluatedBet> = group.iter().filter(|b| b.is_up).collect();
+        let downs: Vec<&&EvaluatedBet> = group.iter().filter(|b| !b.is_up).collect();
+        let (up_count, up_implied, up_actual) = direction_stats(&ups);
+        let (down_count, down_implied, down_actual) = direction_stats(&downs);
+
         buckets.push(CalibrationBucket {
             bucket_low: i as f64 / 10.0,
             bucket_high: (i as f64 + 1.0) / 10.0,
@@ -130,6 +159,12 @@ pub fn run_calibration(oracles: &[Oracle], mints: &[PositionMint]) -> Calibratio
             actual_win_rate: win_rate,
             calibration_gap: gap,
             avg_roi,
+            up_count,
+            up_implied,
+            up_actual,
+            down_count,
+            down_implied,
+            down_actual,
         });
     }
 
@@ -364,6 +399,26 @@ mod tests {
         assert_eq!(r.total_settled_oracles, 1);
         // 2 wins of 3
         assert!((r.overall_win_rate - 2.0 / 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn direction_breakdown_splits_correctly() {
+        let oracles = vec![oracle("o1", Some(66_060_000_000_000))];
+        let mints = vec![
+            // 50-55% UP, settlement 66060
+            mint("o1", 66_000_000_000_000, true, 520_000_000),  // UP win
+            mint("o1", 66_100_000_000_000, true, 530_000_000),  // UP loss
+            // 50-55% DOWN
+            mint("o1", 66_100_000_000_000, false, 510_000_000), // DOWN win
+        ];
+        let r = run_calibration(&oracles, &mints);
+        let b = r.buckets.iter().find(|b| b.bucket_low == 0.5).unwrap();
+        assert_eq!(b.up_count, 2, "two UP bets in 50-60 bucket");
+        assert_eq!(b.down_count, 1, "one DOWN bet in 50-60 bucket");
+        // UP: 1 win of 2 = 50%
+        assert!((b.up_actual - 0.5).abs() < 1e-9);
+        // DOWN: 1 win of 1 = 100%
+        assert!((b.down_actual - 1.0).abs() < 1e-9);
     }
 
     #[test]

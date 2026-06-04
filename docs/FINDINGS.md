@@ -58,3 +58,42 @@ unavailable. This is a data limitation we disclose openly.
   be dishonest given look-ahead and small tail samples.
 - Mainnet (Q3) with real participants will produce cleaner calibration
   data; DeepEdge is the tool that surfaces it.
+
+
+## Directional breakdown (UP vs DOWN) — added Day 2 afternoon
+
+Splitting each bucket by bet direction reveals two robust patterns:
+
+### Pattern 1: Strong UP bias in participation
+Traders bet UP far more than DOWN across all buckets:
+- 40-50%: 144 UP vs 66 DOWN (69% UP)
+- 50-60%: 267 UP vs 98 DOWN (73% UP)
+
+DeepBook Predict testnet participants are structurally bullish —
+they prefer betting "price goes up."
+
+### Pattern 2: The 40-50% over-pricing is UP-driven
+| Bucket  | dir  | n   | implied | actual | gap    |
+|---------|------|-----|---------|--------|--------|
+| 40-50%  | UP   | 144 | 46.7%   | 34.0%  | -12.7% |
+| 40-50%  | DOWN | 66  | 46.2%   | 39.4%  | -6.8%  |
+| 50-60%  | UP   | 267 | 53.1%   | 54.7%  | +1.6%  |
+| 50-60%  | DOWN | 98  | 53.4%   | 56.1%  | +2.7%  |
+
+Reliable (large n): the 40-50% UP over-pricing (-12.7%, n=144) is the
+strongest signal. Near-even-money UP bets are systematically too
+expensive; they win only 34% of the time despite a ~47% implied price.
+The 50-60% band is well-calibrated for both directions.
+
+Small-sample / suggestive only:
+- 70-80% UP actual 100% (n=17), 90-100% actual 100% (n=30): favorites
+  hit reliably, but samples are too small for strong claims.
+- 10-30% DOWN buckets (n=7-8): not statistically meaningful.
+
+### Honest interpretation
+A bullish crowd over-buys near-even-money UP positions, making them
+over-priced relative to realized outcomes. This is consistent with a
+well-documented behavioral bias. DeepEdge's value is to SURFACE this
+in real time — showing a user when an UP bet sits in the historically
+over-priced zone — not to guarantee profit on a thin testnet dataset.
+
