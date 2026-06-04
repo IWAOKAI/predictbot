@@ -8,7 +8,8 @@ use std::sync::Arc;
 
 use crate::client::PredictServerClient;
 use crate::engine::{
-    compute_edge_score, compute_strike_grid, EdgeScore, StrikeGrid,
+    compute_edge_score, compute_strike_grid, compute_edge_grid,
+    EdgeScore, StrikeGrid, EdgeGrid, MarketAskIndex,
 };
 use crate::types::{Oracle, OracleState};
 
@@ -174,3 +175,53 @@ pub async fn get_strikes(
         grid,
     }))
 }
+
+
+#[derive(Serialize)]
+pub struct EdgesResponse {
+    pub oracle: MarketSummary,
+    pub edge_grid: Option<EdgeGrid>,
+}
+
+pub async fn get_edges(
+    State(state): State<AppState>,
+    Path(oracle_id): Path<String>,
+    Query(q): Query<StrikesQuery>,
+) -> Result<Json<EdgesResponse>, (StatusCode, String)> {
+    let oracle_state = state
+        .predict_client
+        .oracle_state(&oracle_id)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    // 最新 100 件の mint を取得し、この oracle の market ask index を構築
+    let mints = state
+        .predict_client
+        .positions_minted(100)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    let ask_index = MarketAskIndex::from_mints(&mints, &oracle_id);
+
+    let num_strikes = q.num.unwrap_or(11);
+    let step_ticks = q.step.unwrap_or(50);
+    let now_ms = chrono::Utc::now().timestamp_millis();
+
+    let edge_grid = match (&oracle_state.latest_price, &oracle_state.latest_svi) {
+        (Some(price), Some(svi)) => Some(compute_edge_grid(
+            &oracle_state.oracle,
+            price,
+            svi,
+            &ask_index,
+            now_ms,
+            num_strikes,
+            step_ticks,
+        )),
+        _ => None,
+    };
+
+    Ok(Json(EdgesResponse {
+        oracle: MarketSummary::from(&oracle_state.oracle),
+        edge_grid,
+    }))
+}
+

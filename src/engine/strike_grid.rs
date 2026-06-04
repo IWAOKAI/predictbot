@@ -15,6 +15,7 @@ use serde::Serialize;
 
 use crate::engine::pricing::{binary_call_probability, binary_put_probability};
 use crate::engine::svi::SviParams;
+use crate::engine::market_edge::{MarketAskIndex, DirectionalEdge, EdgeSignal, evaluate_direction};
 use crate::types::{Oracle, OraclePrice, OracleSvi};
 
 #[derive(Debug, Clone, Serialize)]
@@ -112,6 +113,103 @@ pub fn compute_strike_grid(
         forward_usd: forward,
         seconds_until_expiry: oracle.seconds_until_expiry(now_ms),
         atm_strike_usd: atm,
+        strikes,
+    }
+}
+
+
+/// market ask を結合した、1ストライクの完全な edge 情報
+#[derive(Debug, Clone, Serialize)]
+pub struct StrikeEdge {
+    pub strike_usd: f64,
+    pub log_moneyness: f64,
+    pub implied_vol_annualized: Option<f64>,
+    pub up: DirectionalEdge,
+    pub down: DirectionalEdge,
+}
+
+/// best edge（全ストライク×方向のうち最大 EV）
+#[derive(Debug, Clone, Serialize)]
+pub struct BestEdge {
+    pub strike_usd: f64,
+    pub direction: String,
+    pub fair: f64,
+    pub market_ask: f64,
+    pub ev: f64,
+}
+
+/// market ask を結合した edge grid 全体
+#[derive(Debug, Clone, Serialize)]
+pub struct EdgeGrid {
+    pub spot_usd: f64,
+    pub forward_usd: f64,
+    pub seconds_until_expiry: i64,
+    pub atm_strike_usd: f64,
+    pub market_data_points: usize,
+    pub best_edge: Option<BestEdge>,
+    pub strikes: Vec<StrikeEdge>,
+}
+
+/// strike grid を計算し、market ask を結合して EV まで出す
+pub fn compute_edge_grid(
+    oracle: &Oracle,
+    price: &OraclePrice,
+    svi: &OracleSvi,
+    ask_index: &MarketAskIndex,
+    now_ms: i64,
+    num_strikes: usize,
+    step_ticks: i64,
+) -> EdgeGrid {
+    let base = compute_strike_grid(oracle, price, svi, now_ms, num_strikes, step_ticks);
+
+    let mut best: Option<BestEdge> = None;
+
+    let strikes: Vec<StrikeEdge> = base
+        .strikes
+        .iter()
+        .map(|s| {
+            let up = evaluate_direction(s.fair_up, ask_index.lookup_with_ts(s.strike_usd, true));
+            let down =
+                evaluate_direction(s.fair_down, ask_index.lookup_with_ts(s.strike_usd, false));
+
+            // best edge 更新（Buy シグナルかつ EV 最大）
+            for (de, dir) in [(&up, "up"), (&down, "down")] {
+                if de.signal == EdgeSignal::Buy {
+                    if let (Some(ev), Some(market)) = (de.ev, de.market_ask) {
+                        let better = match &best {
+                            None => true,
+                            Some(b) => ev > b.ev,
+                        };
+                        if better {
+                            best = Some(BestEdge {
+                                strike_usd: s.strike_usd,
+                                direction: dir.to_string(),
+                                fair: de.fair,
+                                market_ask: market,
+                                ev,
+                            });
+                        }
+                    }
+                }
+            }
+
+            StrikeEdge {
+                strike_usd: s.strike_usd,
+                log_moneyness: s.log_moneyness,
+                implied_vol_annualized: s.implied_vol_annualized,
+                up,
+                down,
+            }
+        })
+        .collect();
+
+    EdgeGrid {
+        spot_usd: base.spot_usd,
+        forward_usd: base.forward_usd,
+        seconds_until_expiry: base.seconds_until_expiry,
+        atm_strike_usd: base.atm_strike_usd,
+        market_data_points: ask_index.len(),
+        best_edge: best,
         strikes,
     }
 }

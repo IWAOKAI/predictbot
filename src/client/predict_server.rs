@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use reqwest::Client;
 use std::time::Duration;
 
-use crate::types::{Oracle, OracleState, ManagerSummary, ManagerPnl, VaultSummary};
+use crate::types::{Oracle, OracleState, ManagerSummary, ManagerPnl, VaultSummary, PositionMint};
 
 const DEFAULT_BASE_URL: &str = "https://predict-server.testnet.mystenlabs.com";
 
@@ -85,6 +85,14 @@ impl PredictServerClient {
         let res = self.http.get(&url).send().await?.error_for_status()?;
         Ok(res.json().await?)
     }
+
+    /// GET /positions/minted?limit=N
+    /// 最新 N 件の binary position mint を取得（全 oracle 横断、サーバー側 oracle フィルタは無い）
+    pub async fn positions_minted(&self, limit: usize) -> Result<Vec<PositionMint>> {
+        let url = format!("{}/positions/minted?limit={}", self.base_url, limit);
+        let res = self.http.get(&url).send().await?.error_for_status()?;
+        Ok(res.json().await?)
+    }
 }
 
 #[cfg(test)]
@@ -94,6 +102,7 @@ mod tests {
     const PREDICT_ID: &str = "0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a";
 
     #[tokio::test]
+    #[ignore = "hits live Predict Server; run with --ignored"]
     async fn test_status() {
         let client = PredictServerClient::new().unwrap();
         let status = client.status().await.unwrap();
@@ -101,6 +110,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "hits live Predict Server; run with --ignored"]
     async fn test_list_oracles() {
         let client = PredictServerClient::new().unwrap();
         let oracles = client.list_oracles(PREDICT_ID).await.unwrap();
