@@ -71,6 +71,21 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
       .finally(() => setManagerChecked(true));
   }, [account]);
 
+  // when market data refreshes (strikes shift with BTC price),
+  // keep the selected strike valid by snapping to the nearest available one
+  useEffect(() => {
+    if (strikes.length === 0) return;
+    const exists = strikes.some((s) => Math.abs(s.strike_usd - selectedStrike) < 0.5);
+    if (!exists) {
+      const nearest = strikes.reduce((best, s) =>
+        Math.abs(s.strike_usd - selectedStrike) < Math.abs(best.strike_usd - selectedStrike)
+          ? s
+          : best
+      , strikes[0]);
+      setSelectedStrike(nearest.strike_usd);
+    }
+  }, [strikes, selectedStrike]);
+
   async function handleDeposit() {
     const amount = BigInt(Math.round(parseFloat(depositUsd) * 1e6));
     if (amount <= 0n || !managerId) return;
