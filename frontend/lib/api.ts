@@ -122,6 +122,16 @@ export interface EdgesResponse {
   edge_grid: EdgeGrid | null;
 }
 
+
+// --- PredictManager lookup ---
+
+export interface ManagerEvent {
+  manager_id: string;
+  owner: string;
+  digest: string;
+  checkpoint_timestamp_ms: number;
+}
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
@@ -129,4 +139,6 @@ export const api = {
     getJson<StrikesResponse>(`/api/markets/${oracleId}/strikes?num=15&step=50`),
   edges: (oracleId: string) =>
     getJson<EdgesResponse>(`/api/markets/${oracleId}/edges?num=15&step=50`),
+  manager: (owner: string) =>
+    getJson<ManagerEvent[]>(`/api/manager?owner=${owner}`),
 };

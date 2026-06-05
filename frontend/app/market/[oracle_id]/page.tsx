@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, StrikesResponse, EdgesResponse, StrikeRow } from "@/lib/api";
+import { BetPanel } from "@/components/BetPanel";
 import {
   LineChart,
   Line,
@@ -159,6 +160,20 @@ export default function MarketDetailPage() {
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* bet panel */}
+      <div style={{ marginBottom: 24 }}>
+        <BetPanel
+          oracleId={oracle.oracle_id}
+          expiry={oracle.expiry}
+          atmStrike={grid.atm_strike_usd}
+          strikes={grid.strikes.map((s) => ({
+            strike_usd: s.strike_usd,
+            fair_up: s.fair_up,
+            fair_down: s.fair_down,
+          }))}
+        />
       </div>
 
       {/* fair probability table */}

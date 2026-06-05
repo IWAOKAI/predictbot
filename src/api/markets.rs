@@ -225,3 +225,21 @@ pub async fn get_edges(
     }))
 }
 
+
+#[derive(Deserialize)]
+pub struct ManagerQuery {
+    pub owner: String,
+}
+
+pub async fn get_manager(
+    State(state): State<AppState>,
+    Query(q): Query<ManagerQuery>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let result = state
+        .predict_client
+        .managers_by_owner(&q.owner)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    Ok(Json(result))
+}
+
