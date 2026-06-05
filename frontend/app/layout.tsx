@@ -55,10 +55,22 @@ export default function RootLayout({
                 Markets
               </Link>
               <Link
+                href="/overview"
+                style={{ color: "var(--text)", textDecoration: "none" }}
+              >
+                Overview
+              </Link>
+              <Link
                 href="/insights"
                 style={{ color: "var(--text)", textDecoration: "none" }}
               >
                 Insights
+              </Link>
+              <Link
+                href="/portfolio"
+                style={{ color: "var(--text)", textDecoration: "none" }}
+              >
+                Portfolio
               </Link>
             </nav>
           </div>
