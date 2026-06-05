@@ -220,8 +220,11 @@ function StrikeTable({ strikes, atm }: { strikes: StrikeRow[]; atm: number }) {
               <td style={{ padding: "8px 10px", textAlign: "left" }}>
                 ${s.strike_usd.toLocaleString()}
                 {isAtm && (
-                  <span style={{ color: "var(--primary)", fontSize: 11, marginLeft: 6 }}>
-                    ATM
+                  <span
+                    style={{ color: "var(--primary)", fontSize: 11, marginLeft: 6 }}
+                    title="At-the-money: strike closest to current price"
+                  >
+                    at current price
                   </span>
                 )}
               </td>

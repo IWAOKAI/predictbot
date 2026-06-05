@@ -124,7 +124,13 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
     );
   }
 
-  const selectedRow = strikes.find((s) => Math.abs(s.strike_usd - selectedStrike) < 1);
+  const selectedRow =
+    strikes.find((s) => Math.abs(s.strike_usd - selectedStrike) < 0.5) ??
+    strikes.reduce((best, s) =>
+      Math.abs(s.strike_usd - selectedStrike) < Math.abs(best.strike_usd - selectedStrike)
+        ? s
+        : best
+    , strikes[0]);
   const fairPct = selectedRow
     ? ((isUp ? selectedRow.fair_up : selectedRow.fair_down) * 100).toFixed(1)
     : "-";
@@ -162,20 +168,41 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
       >
         {strikes.map((s) => (
           <option key={s.strike_usd} value={s.strike_usd}>
-            ${s.strike_usd.toLocaleString()}{Math.abs(s.strike_usd - atmStrike) < 1 ? " (ATM)" : ""}
+            ${s.strike_usd.toLocaleString()}{Math.abs(s.strike_usd - atmStrike) < 1 ? " - at-the-money (current price)" : ""}
           </option>
         ))}
       </select>
 
-      <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 14 }}>
-        DeepEdge fair probability:{" "}
-        <strong style={{ color: isUp ? "var(--up)" : "var(--down)" }}>{fairPct}%</strong>
+      <div
+        style={{
+          marginBottom: 14,
+          padding: 12,
+          borderRadius: 10,
+          background: "#f0f9ff",
+          border: "1px solid #bae6fd",
+        }}
+      >
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
+          DeepEdge fair value for {isUp ? "UP" : "DOWN"} @ ${selectedStrike.toLocaleString()}
+        </div>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+          <strong style={{ fontSize: 24, color: isUp ? "var(--up)" : "var(--down)" }}>
+            {fairPct}%
+          </strong>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            model probability BTC settles {isUp ? "above" : "below"} this strike
+          </span>
+        </div>
+        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+          A fair bet pays out at this probability. Bet when the market price is
+          cheaper than fair.
+        </div>
       </div>
 
       <label style={{ fontSize: 13, color: "var(--text-muted)" }}>Bet amount (DUSDC)</label>
       <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
         <input type="number" value={betUsd} onChange={(e) => setBetUsd(e.target.value)} style={inputStyle} />
-        <button onClick={handleBet} style={primaryBtn}>Bet {isUp ? "UP" : "DOWN"}</button>
+        <button onClick={handleBet} style={primaryBtn}>Place Bet</button>
       </div>
 
       {status.kind !== "idle" && (
