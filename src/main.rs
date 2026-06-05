@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use deepedge::api::{AppState, list_markets, get_market, get_strikes, get_edges, get_manager};
+use deepedge::api::{AppState, list_markets, get_market, get_strikes, get_edges, get_manager, get_positions, get_summary};
 use deepedge::api::backtest::{calibration, accuracy};
 use deepedge::client::PredictServerClient;
 use tower_http::cors::CorsLayer;
@@ -54,6 +54,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/backtest/calibration", get(calibration))
         .route("/api/backtest/accuracy", get(accuracy))
         .route("/api/manager", get(get_manager))
+        .route("/api/manager/positions", get(get_positions))
+        .route("/api/manager/summary", get(get_summary))
         .fallback(fallback)
         .layer(CorsLayer::permissive())
         .with_state(state);

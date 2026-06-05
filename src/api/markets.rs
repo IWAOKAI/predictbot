@@ -11,7 +11,7 @@ use crate::engine::{
     compute_edge_score, compute_strike_grid, compute_edge_grid,
     EdgeScore, StrikeGrid, EdgeGrid, MarketAskIndex,
 };
-use crate::types::{Oracle, OracleState};
+use crate::types::{Oracle, OracleState, ManagerSummary};
 
 const PREDICT_ID: &str = "0xc8736204d12f0a7277c86388a68bf8a194b0a14c5538ad13f22cbd8e2a38028a";
 
@@ -238,6 +238,36 @@ pub async fn get_manager(
     let result = state
         .predict_client
         .managers_by_owner(&q.owner)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    Ok(Json(result))
+}
+
+
+#[derive(Deserialize)]
+pub struct ManagerIdQuery {
+    pub manager: String,
+}
+
+pub async fn get_positions(
+    State(state): State<AppState>,
+    Query(q): Query<ManagerIdQuery>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let result = state
+        .predict_client
+        .manager_positions(&q.manager)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    Ok(Json(result))
+}
+
+pub async fn get_summary(
+    State(state): State<AppState>,
+    Query(q): Query<ManagerIdQuery>,
+) -> Result<Json<ManagerSummary>, (StatusCode, String)> {
+    let result = state
+        .predict_client
+        .manager_summary(&q.manager)
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
     Ok(Json(result))

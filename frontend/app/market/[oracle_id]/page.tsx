@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, StrikesResponse, EdgesResponse, StrikeRow } from "@/lib/api";
 import { BetPanel } from "@/components/BetPanel";
+import { MyPositions } from "@/components/MyPositions";
 import {
   LineChart,
   Line,
@@ -174,8 +175,9 @@ export default function MarketDetailPage() {
           Volatility smile (SVI)
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 18px" }}>
-          Annualized implied volatility across strikes, from the on-chain SVI
-          parameters.
+          Implied volatility (IV) — how big a price swing the market expects,
+          annualized — across strikes, from the on-chain SVI parameters. Higher
+          IV means the market expects bigger moves.
         </p>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={smileData} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
@@ -241,6 +243,11 @@ export default function MarketDetailPage() {
         />
       </div>
 
+      {/* my positions */}
+      <div style={{ marginBottom: 24 }}>
+        <MyPositions oracleId={oracle.oracle_id} />
+      </div>
+
       {/* fair probability table */}
       <div className="card" style={{ padding: 24, marginBottom: 24, overflowX: "auto" }}>
         <h2 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>
@@ -267,7 +274,12 @@ function StrikeTable({ strikes, atm }: { strikes: StrikeRow[]; atm: number }) {
           <th style={{ padding: "8px 10px", textAlign: "left" }}>Strike</th>
           <th style={{ padding: "8px 10px" }}>Fair UP</th>
           <th style={{ padding: "8px 10px" }}>Fair DOWN</th>
-          <th style={{ padding: "8px 10px" }}>IV</th>
+          <th style={{ padding: "8px 10px" }}>
+            IV
+            <div style={{ fontSize: 10, fontWeight: 400, color: "var(--text-muted)" }}>
+              expected swing
+            </div>
+          </th>
         </tr>
       </thead>
       <tbody>

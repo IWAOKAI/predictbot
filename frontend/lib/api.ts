@@ -132,6 +132,29 @@ export interface ManagerEvent {
   checkpoint_timestamp_ms: number;
 }
 
+
+export interface PositionMint {
+  digest: string;
+  oracle_id: string;
+  is_up: boolean;
+  strike: number;
+  quantity: number;
+  cost: number;
+  ask_price: number;
+  checkpoint_timestamp_ms: number;
+}
+
+export interface PositionsResponse {
+  minted?: PositionMint[];
+}
+
+export interface ManagerSummary {
+  open_positions: number;
+  realized_pnl: number;
+  account_value: number;
+  balances: { quote_asset: string; balance: number }[];
+}
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
@@ -141,4 +164,8 @@ export const api = {
     getJson<EdgesResponse>(`/api/markets/${oracleId}/edges?num=15&step=50`),
   manager: (owner: string) =>
     getJson<ManagerEvent[]>(`/api/manager?owner=${owner}`),
+  positions: (managerId: string) =>
+    getJson<PositionsResponse>(`/api/manager/positions?manager=${managerId}`),
+  summary: (managerId: string) =>
+    getJson<ManagerSummary>(`/api/manager/summary?manager=${managerId}`),
 };

@@ -90,6 +90,14 @@ impl PredictServerClient {
     /// 最新 N 件の binary position mint を取得（全 oracle 横断、サーバー側 oracle フィルタは無い）
     /// GET /managers?owner=ADDR
     /// 指定 owner の PredictManager イベントを返す（無ければ空配列）
+    /// GET /managers/{id}/positions
+    /// 指定 manager のベット履歴（minted positions 等）を返す
+    pub async fn manager_positions(&self, manager_id: &str) -> Result<serde_json::Value> {
+        let url = format!("{}/managers/{}/positions", self.base_url, manager_id);
+        let res = self.http.get(&url).send().await?.error_for_status()?;
+        Ok(res.json().await?)
+    }
+
     pub async fn managers_by_owner(&self, owner: &str) -> Result<serde_json::Value> {
         let url = format!("{}/managers?owner={}", self.base_url, owner);
         let res = self.http.get(&url).send().await?.error_for_status()?;
