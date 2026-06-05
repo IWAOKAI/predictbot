@@ -24,15 +24,34 @@ export default function MarketDetailPage() {
   const [edges, setEdges] = useState<EdgesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   useEffect(() => {
-    Promise.all([api.strikes(oracleId), api.edges(oracleId)])
-      .then(([s, e]) => {
-        setData(s);
-        setEdges(e);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    let active = true;
+
+    function fetchData(isInitial: boolean) {
+      Promise.all([api.strikes(oracleId), api.edges(oracleId)])
+        .then(([s, e]) => {
+          if (!active) return;
+          setData(s);
+          setEdges(e);
+          setLastUpdated(new Date());
+          setError(null);
+        })
+        .catch((err) => {
+          if (active && isInitial) setError(err.message);
+        })
+        .finally(() => {
+          if (active && isInitial) setLoading(false);
+        });
+    }
+
+    fetchData(true);
+    const id = setInterval(() => fetchData(false), 30000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
   }, [oracleId]);
 
   if (loading)
@@ -94,6 +113,33 @@ export default function MarketDetailPage() {
           >
             {oracle.status}
           </span>
+          {oracle.status === "active" && lastUpdated && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                color: "var(--text-muted)",
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 999,
+                  background: "#22c55e",
+                  display: "inline-block",
+                }}
+              />
+              Live · updated{" "}
+              {lastUpdated.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
+            </span>
+          )}
         </div>
         <div
           style={{
@@ -161,6 +207,25 @@ export default function MarketDetailPage() {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {/* near-expiry warning */}
+      {mins < 5 && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#fef3c7",
+            border: "1px solid #fcd34d",
+            fontSize: 13,
+            color: "#92400e",
+          }}
+        >
+          <strong>This market is closing soon.</strong> Near expiry, fair
+          values swing toward 100% / 0% as there is little time left for the
+          price to move. Bet with caution.
+        </div>
+      )}
 
       {/* bet panel */}
       <div style={{ marginBottom: 24 }}>

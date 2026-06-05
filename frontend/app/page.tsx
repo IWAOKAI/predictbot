@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { api, MarketSummary } from "@/lib/api";
 
+function minsUntil(expiryMs: number): number {
+  return Math.floor((expiryMs - Date.now()) / 60000);
+}
+
 function timeUntil(expiryMs: number): string {
   const diff = expiryMs - Date.now();
   if (diff <= 0) return "expired";
@@ -120,9 +124,40 @@ function MarketCard({ market }: { market: MarketSummary }) {
           {market.underlying_asset}
         </span>
         <span className="badge badge-active">active</span>
+        {minsUntil(market.expiry) < 5 && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#b45309",
+              background: "#fef3c7",
+              padding: "2px 8px",
+              borderRadius: 999,
+            }}
+          >
+            closing soon
+          </span>
+        )}
       </div>
 
-      <Row label="Expires in" value={timeUntil(market.expiry)} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          padding: "6px 0",
+          fontSize: 13,
+        }}
+      >
+        <span style={{ color: "var(--text-muted)" }}>Expires in</span>
+        <span
+          style={{
+            fontWeight: 600,
+            color: minsUntil(market.expiry) < 5 ? "var(--down)" : "var(--text)",
+          }}
+        >
+          {timeUntil(market.expiry)}
+        </span>
+      </div>
       <Row
         label="Min strike"
         value={`$${market.min_strike_usd.toLocaleString()}`}
