@@ -202,7 +202,7 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
       <label style={{ fontSize: 13, color: "var(--text-muted)" }}>Bet amount (DUSDC)</label>
       <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
         <input type="number" value={betUsd} onChange={(e) => setBetUsd(e.target.value)} style={inputStyle} />
-        <button onClick={handleBet} style={primaryBtn}>Place Bet</button>
+        <button onClick={handleBet} style={primaryBtn}>BET!</button>
       </div>
 
       {status.kind !== "idle" && (
