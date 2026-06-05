@@ -185,7 +185,7 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
       >
         {strikes.map((s) => (
           <option key={s.strike_usd} value={s.strike_usd}>
-            ${s.strike_usd.toLocaleString()}{Math.abs(s.strike_usd - atmStrike) < 1 ? " - at-the-money (current price)" : ""}
+            ${s.strike_usd.toLocaleString()}{Math.abs(s.strike_usd - atmStrike) < 1 ? " (current price)" : ""}
           </option>
         ))}
       </select>
