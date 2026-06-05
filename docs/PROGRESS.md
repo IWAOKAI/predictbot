@@ -149,3 +149,50 @@ choose direction/strike -> one-tap bet -> on-chain mint.
 - TODO: confirm-before-bet is done; consider bet history (positions)
 - Demo video (~Day 15), DeepSurge writeup upgrade (submission week)
 
+
+## Day 5 — 2026-06-05 (continued, same long session)
+
+### Added features
+- My Positions panel (components/MyPositions.tsx): connected wallet's
+  bet history via /api/manager/positions + /api/manager/summary
+  (UP/DOWN, strike, fill %, cost, date, suivision tx link; account
+  value + realized P&L header). Scoped to current market on detail
+  page, all-markets on portfolio page.
+- /portfolio page: all bets in one place + nav link
+- /overview page: DeepEdge fair value across every live BTC market in
+  one sortable table (asset, expiry, spot, ATM fair UP/DOWN, IV),
+  closing-soon flagged, rows link to detail + nav link
+- Backend: /api/manager/positions, /api/manager/summary endpoints
+- IV explained for non-experts (header subtitle 'expected swing' +
+  plain-language SVI chart caption)
+- ATM relabeled '(current price)' in the bet strike selector
+
+### Nav is now: Markets · Overview · Insights · Portfolio
+
+### Key data finding (shapes strategy)
+- /api/markets returns 3647 markets total, all BTC; only ~19 are
+  status=active at any time (rest settled).
+- Investigated market_data_points across all active markets for an
+  "edge ranking" feature: nearly all have 0-3 points, best_edge is
+  null everywhere. CONCLUSION: real fair-vs-market edge ranking is
+  not possible on testnet (too little live order-flow). Deferred.
+  On mainnet (Q3) this becomes viable. For now the math we can show
+  is fair value + SVI smile + calibration, all of which we do.
+
+### Debugging lesson reinforced
+- '<' and '>' also get silently dropped when writing .tsx (parsed as
+  JSX). The reduce comparison 'Math.abs(a) < Math.abs(b)' lost its
+  '<'. Same class as the earlier missing '<a'. ALWAYS grep for the
+  operator/opening-tag after writing .tsx via Python.
+
+### State: feature-complete enough to win
+Markets list, market detail (SVI smile + fair + 30s live), Insights
+(calibration), real betting (deposit + mint + confirm), My Positions,
+Portfolio, Overview. Real testnet bets placed and shown.
+
+### NEXT PHASE = communicate, not build
+- README (judges' first impression) -- HIGH
+- demo video script + recording (~Day 13-15) -- HIGH
+- DeepSurge writeup upgrade (submission week 6/19-21) -- HIGH
+- minor polish only if needed; further features are low priority
+
