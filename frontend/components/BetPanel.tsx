@@ -34,6 +34,7 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
   const [betUsd, setBetUsd] = useState("5");
   const [depositUsd, setDepositUsd] = useState("10");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function refreshBalance(mid: string) {
     try {
@@ -87,6 +88,7 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
   async function handleBet() {
     const quantity = BigInt(Math.round(parseFloat(betUsd) * 1e6));
     if (quantity <= 0n || !managerId) return;
+    setShowConfirm(false);
     setStatus({ kind: "working", msg: "Placing bet..." });
     try {
       const tx = buildMintTx({
@@ -202,8 +204,55 @@ export function BetPanel({ oracleId, expiry, atmStrike, strikes }: BetPanelProps
       <label style={{ fontSize: 13, color: "var(--text-muted)" }}>Bet amount (DUSDC)</label>
       <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
         <input type="number" value={betUsd} onChange={(e) => setBetUsd(e.target.value)} style={inputStyle} />
-        <button onClick={handleBet} style={primaryBtn}>BET!</button>
+        <button onClick={() => setShowConfirm(true)} style={primaryBtn}>BET !</button>
       </div>
+
+      {showConfirm && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: 16,
+            borderRadius: 12,
+            background: "#fffbeb",
+            border: "1px solid #fcd34d",
+          }}
+        >
+          <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
+            Confirm your bet
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text)", marginBottom: 4 }}>
+            Betting{" "}
+            <strong>${betUsd} DUSDC</strong> on{" "}
+            <strong style={{ color: isUp ? "var(--up)" : "var(--down)" }}>
+              {isUp ? "UP" : "DOWN"}
+            </strong>{" "}
+            @ ${selectedStrike.toLocaleString()}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
+            DeepEdge fair value: {fairPct}% &middot; this will sign an on-chain
+            transaction
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleBet} style={primaryBtn}>
+              Confirm
+            </button>
+            <button
+              onClick={() => setShowConfirm(false)}
+              style={{
+                padding: "8px 20px",
+                borderRadius: 10,
+                border: "1px solid var(--border)",
+                background: "white",
+                color: "var(--text-muted)",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {status.kind !== "idle" && (
         <div

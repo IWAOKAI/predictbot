@@ -98,3 +98,54 @@ auto-retrying. Next time, on the Mac, use the SAFE tunnel command:
 The -N (no shell) and ExitOnForwardFailure=yes (fail fast on port
 conflict) prevent the runaway loop.
 
+
+## Day 4 — 2026-06-05 (continued)
+
+### MILESTONE: betting works end-to-end on testnet
+Verified real on-chain transactions via Slush wallet (testnet):
+- deposit $5 into PredictManager -> balance updated live ($0 -> $5)
+- mint UP bet $2 -> succeeded, balance $5 -> $4.03
+- mint DOWN bet -> succeeded
+The full loop is live: connect wallet -> see SVI fair value ->
+choose direction/strike -> one-tap bet -> on-chain mint.
+
+### Backend
+- /api/manager?owner= endpoint (proxies predict-server /managers?owner=)
+  -> returns manager_id, or empty for new users
+
+### Frontend
+- components/BetPanel.tsx: PredictManager discovery, DUSDC deposit,
+  UP/DOWN, strike select, bet amount, wallet signing
+  (useSignAndExecuteTransaction)
+- lib/transactions.ts: buildDepositTx (coinWithBalance),
+  buildMintTx (2-step PTB: market_key::up|down -> predict::mint<DUSDC>)
+- tsconfig target -> es2020 (BigInt for u64 amounts)
+
+### UX fixes from self-testing
+- bet button 'BET !' with a CONFIRM step (yellow panel: amount +
+  direction + strike + fair value + "this will sign an on-chain tx")
+  -> prevents accidental one-click bets, safe for demo
+- fair value box explains meaning ("model probability BTC settles
+  above/below this strike; bet when market price < fair")
+- 'ATM' relabeled 'current price' (non-finance users)
+- fairPct falls back to nearest strike (fixed '-%')
+
+### Debugging lessons (cost real time)
+- NEVER write .tsx via `cat > file << EOF`: heredoc silently dropped
+  a line (missing <a tag) AND the useEffect opening line, causing
+  cascading SWC "Expected jsx identifier" errors that pointed at the
+  WRONG line. Always write .tsx via Python open(w).
+- `npm run build` then `next dev` corrupts the shared .next cache
+  ("Cannot find module './948.js'"). After any build, rm -rf .next
+  before dev. For UI tweaks, rely on dev hot-reload, don't run build.
+- SSH tunnel: use the safe command (ServerAliveInterval=60,
+  ExitOnForwardFailure=yes, -N) to avoid fd-exhaustion runaway.
+
+### Remaining (next session)
+- TODO: market-near-expiry display (0m markets show extreme 100%/0%
+  fair, looks odd in demo) -- code locations found:
+  app/page.tsx timeUntil() line 8, market page timeStr line 52-53
+- TODO: real-time auto-refresh (30s)
+- TODO: confirm-before-bet is done; consider bet history (positions)
+- Demo video (~Day 15), DeepSurge writeup upgrade (submission week)
+
