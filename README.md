@@ -31,7 +31,18 @@ DeepEdge sits on top of DeepBook Predict and turns its on-chain volatility surfa
 ## It actually works
 
 This is not a mockup. The full loop runs end-to-end on Sui testnet:
-Real testnet transactions have been placed through this UI: DUSDC deposited into a PredictManager, UP and DOWN positions minted via a 2-step PTB (market_key::up|down then predict::mint), and the resulting positions and realized P&L read back from the indexer. The minimum-requirement "we will test the entire flow" is satisfied today.
+
+```
+connect wallet (Slush)
+  -> see DeepEdge fair value
+  -> choose UP / DOWN + strike
+  -> confirm
+  -> sign in wallet
+  -> on-chain deposit + mint
+  -> position appears in Portfolio
+```
+
+Real testnet transactions have been placed through this UI: DUSDC deposited into a PredictManager, UP and DOWN positions minted via a 2-step PTB (market_key::up|down, then predict::mint), and the resulting positions and realized P&L read back from the indexer. The minimum requirement "we will test the entire flow" is satisfied today.
 
 ---
 
@@ -48,7 +59,7 @@ DeepEdge's calibration backtest is built to be *trustworthy*, not flattering.
 
 Splitting by direction sharpens it: **near-even-money UP bets (40-50%, n=144) imply 46.7% but win only 34.0%** — a -12.7% gap. DeepBook Predict's testnet crowd is structurally bullish (about 70% of bets are UP), and it over-buys cheap UP positions. The 50-60% band is well-calibrated for both directions. Blind betting at the market ask returns about **-9%** (the spread).
 
-**What we explicitly do not claim.** We also computed a Brier-score accuracy comparison that looked spectacular (83% "improvement"). We caught it as a **look-ahead artifact** — our fair value uses SVI observed ~5s before settlement, by which point the forward is already ~99.9% of the settlement price. So that number measures SVI internal consistency, not predictive skill. We keep the endpoint but flag it openly and never present it as evidence of beating the market. Tail buckets (n<40) are labeled suggestive, not conclusive.
+**What we explicitly do not claim.** We also computed a Brier-score accuracy comparison that looked spectacular (83% "improvement"). We caught it as a **look-ahead artifact** — our fair value uses SVI observed about 5 seconds before settlement, by which point the forward is already ~99.9% of the settlement price. So that number measures SVI internal consistency, not predictive skill. We keep the endpoint but flag it openly and never present it as evidence of beating the market. Tail buckets (n<40) are labeled suggestive, not conclusive.
 
 DeepEdge's real value is to **surface** where the market is reliable and where it is systematically off — not to promise profit on a thin testnet dataset.
 
@@ -66,7 +77,7 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 
 ## Tech stack
 
-- **Fair-value engine:** Rust (Axum + Tokio). SVI total-variance model, log-normal binary pricing, calibration and accuracy backtests. ~20 logic tests.
+- **Fair-value engine:** Rust (Axum + Tokio). SVI total-variance model, log-normal binary pricing, calibration and accuracy backtests. About 20 logic tests.
 - **Frontend:** Next.js 14 (App Router), TailwindCSS, @mysten/dapp-kit for wallet connection and transaction signing, Recharts for the smile.
 - **On-chain:** DeepBook Predict on Sui testnet — predict::mint, predict_manager::deposit, market_key::up|down, DUSDC quote asset.
 - **Data:** the public Predict indexer (predict-server.testnet.mystenlabs.com) plus direct Sui RPC.
@@ -78,13 +89,13 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 
 Rust backend (port 3000):
 
-- GET /api/markets — all DeepBook Predict BTC oracles
-- GET /api/markets/:oracle_id/strikes — per-strike fair UP/DOWN from the SVI smile
-- GET /api/markets/:oracle_id/edges — fair vs market ask, where order-flow exists
-- GET /api/backtest/calibration — the calibration report above
-- GET /api/manager?owner= — discover a wallet's PredictManager
-- GET /api/manager/positions?manager= — a manager's bet history
-- GET /api/manager/summary?manager= — account value, realized P&L, balance
+- `GET /api/markets` — all DeepBook Predict BTC oracles
+- `GET /api/markets/:oracle_id/strikes` — per-strike fair UP/DOWN from the SVI smile
+- `GET /api/markets/:oracle_id/edges` — fair vs market ask, where order-flow exists
+- `GET /api/backtest/calibration` — the calibration report above
+- `GET /api/manager?owner=` — discover a wallet's PredictManager
+- `GET /api/manager/positions?manager=` — a manager's bet history
+- `GET /api/manager/summary?manager=` — account value, realized P&L, balance
 
 ---
 
@@ -92,7 +103,7 @@ Rust backend (port 3000):
 
 DeepBook Predict launches on mainnet in Q3, and hackathon projects are expected to redeploy on day one. DeepEdge is built for that day:
 
-- **Day-one redeploy** via the self-hosted mainnet node — the 15x latency edge matters most when real order-flow arrives.
+- **Day-one redeploy** via the self-hosted mainnet node — the latency edge matters most when real order-flow arrives.
 - **Edge ranking.** On testnet, live order-flow is too thin to rank markets by fair-vs-market edge (we verified: market quotes are near-zero across active markets, so this would be vapor). On mainnet, with real participants, DeepEdge will rank the most mispriced bets in real time — the natural extension of the calibration work.
 - **Deeper position analytics** as settled history accumulates.
 
@@ -100,8 +111,7 @@ DeepBook Predict launches on mainnet in Q3, and hackathon projects are expected 
 
 ## Author
 
-**Iwao Kai** — Rust/Move engineer, self-hosted Sui node operator.
-GitHub: IWAOKAI
+**Iwao Kai** — Rust/Move engineer, self-hosted Sui node operator. GitHub: IWAOKAI
 
 ## License
 
