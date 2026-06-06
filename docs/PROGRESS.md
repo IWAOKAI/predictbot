@@ -196,3 +196,38 @@ Portfolio, Overview. Real testnet bets placed and shown.
 - DeepSurge writeup upgrade (submission week 6/19-21) -- HIGH
 - minor polish only if needed; further features are low priority
 
+## Day 6 — 2026-06-06
+
+### Shifted from BUILD to COMMUNICATE (feature set complete)
+
+### Verified demo still works (all 4 pillars)
+- backend/frontend 200; testnet bet history intact (3 mints)
+- overview, market detail fair calc, positions, portfolio summary
+  (account ~$4.7, realized -$0.90) all OK
+- active markets fluctuate ~8-19; /api/markets returns 3647 total
+
+### Checked vs official Problem Statement
+- fits 'Analytics & tooling', overlaps idea #9 but adds real
+  betting -> differentiated; all min requirements met
+
+### Decided NOT to build (fact-checked)
+- Leverage: predict has NO margin/leverage fns (all 17 modules
+  checked). Deferred / not feasible.
+- Edge ranking: testnet order-flow too thin (best_edge null).
+- AI copy-trader / Walrus advisor log: parked post-hackathon.
+
+### README fully rewritten (the win today)
+- Replaced stale Day-1 Edge Score fiction with shipped reality.
+- problem / what it does / IT ACTUALLY WORKS (+flow, real txns) /
+  HONEST ANALYSIS (-12.7% UP + look-ahead disclosure) / five
+  screens / tech / API / mainnet roadmap
+- 4 screenshots in docs/screenshots/, embedded + pushed
+
+### Lesson
+- With a complete product, communicating beats building.
+- Writing .tsx/.md via heredoc drops chars (<a, <, code fences);
+  use Python line-lists with self-checks.
+
+### NEXT
+- demo video (~Day 13-15), DeepSurge writeup (6/19-21),
+  optional 'How to run' in README
