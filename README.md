@@ -6,6 +6,8 @@ A trader-facing analytics and betting layer for DeepBook Predict on Sui — see 
 
 > Submission for Sui Overflow 2026 — DeepBook Track
 
+![Market detail: SVI volatility smile, fair-probability table, and the bet panel](docs/screenshots/market.png)
+
 ---
 
 ## The problem
@@ -72,6 +74,18 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 - **Market detail** — the SVI volatility smile, a full fair-probability table by strike, live auto-refresh every 30s, and the bet panel.
 - **Insights** — the calibration backtest, visualized: where the market is mispriced, by direction.
 - **Portfolio** — your on-chain betting history, account value, and realized P&L.
+
+**Overview** — fair value across every live market:
+
+![Overview table](docs/screenshots/overview.png)
+
+**Insights** — the calibration backtest, visualized:
+
+![Calibration insights](docs/screenshots/insights.png)
+
+**Portfolio** — real on-chain positions and P&L:
+
+![Portfolio](docs/screenshots/portfolio.png)
 
 ---
 
