@@ -231,3 +231,39 @@ Portfolio, Overview. Real testnet bets placed and shown.
 ### NEXT
 - demo video (~Day 13-15), DeepSurge writeup (6/19-21),
   optional 'How to run' in README
+
+## Day 7 — 2026-06-07
+
+### Morning: communicate phase
+- DeepSurge submission draft written (docs/DEEPSURGE.md, gitignored
+  until submission week)
+- README: added 'longer-term vision: a verifiable AI layer' section
+
+### Afternoon: went ambitious — on-chain enforcement
+Saw competitor 'Mandate Memory' (AI + Walrus + enforcement, already
+built). Decided NOT to copy it but to add a real enforcement layer to
+DeepEdge. Verified Walrus works over plain HTTP (PUT/GET blobs).
+
+Built and deployed an on-chain Mandate enforcement contract (Move):
+- Mandate object: per-bet cap, total budget, spent, kill switch
+- BetReceipt hot-potato (no drop/store/key)
+- execute_bet<T>: authorize -> predict::mint -> record, atomic
+  => agent cannot reach mint without passing checks AND recording
+- testnet package: 0x1b74c8ea3bce315731aad517b4df776ea12814b63e5427fc2a3c19e4ee3cb778
+- v1 (authorize/record only): 0x19ba34f6...; Mandate obj 0xadf6e676...
+
+### Hard-won lessons (Move dependency hell)
+- Sui/MoveStdlib version conflicts -> pin both to the rev the git dep
+  uses (b38bca) with override, OR let new CLI's environment resolve it
+- Had to upgrade Sui CLI 1.67.3 -> 1.73.1 (protocol 115 vs 125); old
+  CLI couldn't handle the use_environment=testnet scheme
+- 'unpublished dependencies' + 'already published' -> remove the
+  [published.testnet] entry from Published.toml, then publish with
+  --with-unpublished-dependencies (bundles predict deps into the pkg)
+
+### NEXT (the ambitious build continues)
+- Phase 2: AI reasoning (Claude reads fair value + calibration)
+- Phase 3: log decisions to Walrus, hash on-chain
+- Phase 4: actually CALL execute_bet in a PTB (prove enforcement live)
+- Phase 5: surface in frontend / demo
+- KEEP DeepEdge core (5 screens, README) intact; demo video; submit 6/21
