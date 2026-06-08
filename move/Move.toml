@@ -1,0 +1,12 @@
+[package]
+name = "deepedge_mandate"
+edition = "2024.beta"
+
+[dependencies]
+deepbook_predict = { git = "https://github.com/MystenLabs/deepbookv3.git", subdir = "packages/predict", rev = "predict-testnet-4-16" }
+
+[addresses]
+deepedge_mandate = "0x0"
+
+[environments]
+testnet = "testnet"
