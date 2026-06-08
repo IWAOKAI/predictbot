@@ -12,6 +12,7 @@ module deepedge_mandate::mandate {
     use deepbook_predict::predict_manager::PredictManager;
     use deepbook_predict::oracle::OracleSVI;
     use deepbook_predict::market_key::MarketKey;
+    use std::string::String;
 
     // --- errors ---
     const EMandateInactive: u64 = 1;
@@ -132,6 +133,64 @@ module deepedge_mandate::mandate {
     }
 
     // --- read-only accessors ---
+    // ---------------------------------------------------------------------
+    // v3: decision-bound authorization (the verifiable autonomous loop)
+    // ---------------------------------------------------------------------
+
+    /// Hot-potato carrying the AI decision that justifies this bet. Like
+    /// BetReceipt it has no drop/store/key, so it MUST be settled by
+    /// record_decision_and_consume in the same transaction. This binds an
+    /// on-chain spend to a specific, hashed, Walrus-stored reasoning record.
+    public struct DecisionReceipt {
+        mandate_id: ID,
+        amount: u64,
+        decision_hash: String,
+        blob_id: String,
+    }
+
+    /// Emitted when a decision-bound bet is recorded. The decision_hash and
+    /// blob_id let anyone fetch the reasoning from Walrus and verify it hashes
+    /// to exactly what was recorded on-chain at this spend.
+    public struct DecisionRecorded has copy, drop {
+        mandate_id: ID,
+        amount: u64,
+        decision_hash: String,
+        blob_id: String,
+        spent_after: u64,
+    }
+
+    /// Authorize a bet that is justified by an AI decision. Same limit checks
+    /// as authorize(), but the resulting hot-potato also carries the SHA-256
+    /// of the reasoning record and its Walrus blob id.
+    public fun authorize_with_decision(
+        m: &Mandate,
+        amount: u64,
+        decision_hash: String,
+        blob_id: String,
+    ): DecisionReceipt {
+        assert!(m.active, EMandateInactive);
+        assert!(amount <= m.per_bet_cap, EPerBetExceeded);
+        assert!(m.spent + amount <= m.total_budget, EBudgetExceeded);
+        DecisionReceipt { mandate_id: object::id(m), amount, decision_hash, blob_id }
+    }
+
+    /// Settle a DecisionReceipt: record the spend and emit DecisionRecorded so
+    /// the reasoning hash + blob id are permanently on-chain. The only way to
+    /// consume a DecisionReceipt, so an authorized decision-bet cannot be left
+    /// unrecorded.
+    public fun record_decision_and_consume(m: &mut Mandate, receipt: DecisionReceipt) {
+        let DecisionReceipt { mandate_id, amount, decision_hash, blob_id } = receipt;
+        assert!(mandate_id == object::id(m), ENotOwner);
+        m.spent = m.spent + amount;
+        event::emit(DecisionRecorded {
+            mandate_id,
+            amount,
+            decision_hash,
+            blob_id,
+            spent_after: m.spent,
+        });
+    }
+
     public fun spent(m: &Mandate): u64 { m.spent }
     public fun total_budget(m: &Mandate): u64 { m.total_budget }
     public fun per_bet_cap(m: &Mandate): u64 { m.per_bet_cap }

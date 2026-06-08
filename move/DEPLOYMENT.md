@@ -79,3 +79,29 @@ Mandate object: 0x40cc6731b2fbc447b35f4171bee72503036602fc96a12a26ad95350e8cfdbe
 So the enforcement is not just deployed — it demonstrably accepts
 valid bets, rejects over-cap bets, and makes 'authorize without
 record' structurally impossible, all on testnet.
+
+
+## Phase 3 — verifiable autonomous loop (Day 8, 2026-06-09)
+
+Full cycle proven on testnet, package
+0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a,
+Mandate 0x753fb2e637d42067aeea59df6044ddfeb37ac22c92f28c89a8ffc6e3a4635f3a.
+
+mandate v3 adds DecisionReceipt (hot-potato) + authorize_with_decision /
+record_decision_and_consume, emitting DecisionRecorded(decision_hash,
+blob_id, amount, spent_after).
+
+scripts/deepedge_loop.py runs one cycle:
+  1. observe market + fair value + calibration (DeepEdge backend)
+  2. reason: Claude (sonnet-4-5) corrects the fair prob with the bucket's
+     historical optimism bias and returns a JSON verdict
+  3. store the full decision record on Walrus -> blobId
+  4. SHA-256 the record
+  5. authorize_with_decision (per-bet cap / budget / kill switch enforced)
+     -> record_decision_and_consume -> DecisionRecorded on-chain
+  6. fetch the blob back from Walrus, re-hash, confirm it equals the
+     on-chain hash (verification: True)
+
+So an AI agent observes, decides, stores its reasoning immutably, and can
+only act within the Mandate's limits -- a verifiable autonomous agent.
+Example cycle digest: 9HZVqeiYsEHQdwh8FGwnKvC9Z3f5Vf9TPrBhvK67QUGc
