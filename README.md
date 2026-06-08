@@ -121,6 +121,17 @@ DeepBook Predict launches on mainnet in Q3, and hackathon projects are expected 
 - **Edge ranking.** On testnet, live order-flow is too thin to rank markets by fair-vs-market edge (we verified: market quotes are near-zero across active markets, so this would be vapor). On mainnet, with real participants, DeepEdge will rank the most mispriced bets in real time — the natural extension of the calibration work.
 - **Deeper position analytics** as settled history accumulates.
 
+### The longer-term vision: a verifiable AI layer
+
+DeepEdge today surfaces the math so a human can judge each bet. The natural next step is an AI layer that *acts* on that math, accountably:
+
+- An agent prices and places bets using DeepEdge's fair-value engine.
+- Every decision — the market data it saw, the fair value it computed, and the bet it chose — is written to **Walrus** as a tamper-proof record.
+- The agent learns from its own settled outcomes over time.
+
+Financial decisions demand accountability; regulators require firms to explain *why* a given call was made. An on-chain, Walrus-backed decision log gives an AI agent a **verifiable memory** — anyone can later audit exactly why a position was taken. The calibration work in DeepEdge today is the foundation such judgment would build on. This is the direction DeepEdge points toward; the current submission is the working analytics-and-betting layer beneath it.
+
+
 ---
 
 ## Author
