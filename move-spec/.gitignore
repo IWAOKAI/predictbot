@@ -1,1 +1,5 @@
 build/
+output/
+*.log
+*.log.*
+sui-prover.log*
