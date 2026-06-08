@@ -1,0 +1,7 @@
+mandate_spec::authorize_respects_cap_spec [scenario]
+├── mandate::authorize
+├── mandate::per_bet_cap
+├── mandate::total_budget
+├── mandate::is_active
+├── mandate::receipt_amount
+└── mandate::spent

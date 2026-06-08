@@ -1,0 +1,79 @@
+2026-06-08T21:38:29.481330Z DEBUG sui_prover: Sui-Prover CLI version: 1.5.3
+2026-06-08T21:38:31.935724Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:38:31.936027Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:38:32.072485Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:38:32.072801Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:38:32.188775Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:38:32.208463Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:38:32.224421Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:38:32.224771Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:38:32.337474Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:38:32.356030Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:38:32.372836Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:38:32.373145Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:38:32.487233Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:38:32.507033Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:38:32.507185Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_Check.bpl`
+2026-06-08T21:40:40.252016Z DEBUG sui_prover: Sui-Prover CLI version: 1.5.3
+2026-06-08T21:42:44.166872Z DEBUG sui_prover: Sui-Prover CLI version: 1.5.3
+2026-06-08T21:42:45.796106Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:42:45.796423Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:42:45.919665Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:42:45.920017Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:42:46.035869Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:42:46.054829Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:42:46.069930Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:42:46.070234Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:42:46.175217Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:42:46.192745Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:42:46.207425Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:42:46.207728Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:42:46.312108Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:42:46.331415Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:42:46.331458Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_Check.bpl`
+2026-06-08T21:42:46.331713Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:42:46.331719Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -vcsCores:4 -printVerifiedProceduresCount:0 -printModel:1 -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -infer:j -proverOpt:PROVER_PATH=/root/.local/bin/z3 -enhancedErrorMessages:1 -inferModifies -proverOpt:O:model_validate=true output/mandate_spec::authorize_respects_cap_spec_Check.bpl
+2026-06-08T21:42:47.025064Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:42:47.027100Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_Check.bpl.log
+2026-06-08T21:42:47.032073Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_Assume.bpl`
+2026-06-08T21:42:47.032164Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:42:47.032230Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -inferModifies -enhancedErrorMessages:1 -printVerifiedProceduresCount:0 -proverOpt:O:model_validate=true -proverOpt:PROVER_PATH=/root/.local/bin/z3 -infer:j -printModel:1 -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -vcsCores:4 output/mandate_spec::authorize_respects_cap_spec_Assume.bpl
+2026-06-08T21:42:47.541205Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:42:47.541238Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_Assume.bpl.log
+2026-06-08T21:42:47.541808Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl`
+2026-06-08T21:42:47.541901Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:42:47.541907Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -inferModifies -enhancedErrorMessages:1 -proverOpt:O:model_validate=true -infer:j -printVerifiedProceduresCount:0 -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -vcsCores:4 output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl -proverOpt:PROVER_PATH=/root/.local/bin/z3 -printModel:1
+2026-06-08T21:42:48.232729Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:42:48.233563Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl.log
+2026-06-08T21:42:48.234152Z  INFO move_prover_boogie_backend::generator: 0.000s building, 2.454s verification
+2026-06-08T21:43:42.067850Z DEBUG sui_prover: Sui-Prover CLI version: 1.5.3
+2026-06-08T21:43:43.815420Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:43:43.816475Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:43:43.948944Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:43:43.949989Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:43:44.078827Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:43:44.101481Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:43:44.118848Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:43:44.119867Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:43:44.241298Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:43:44.268387Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:43:44.287402Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate
+2026-06-08T21:43:44.288492Z  INFO move_prover_boogie_backend::generator: preparing module 0x0::mandate_spec
+2026-06-08T21:43:44.410224Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: generating verification conditions for 255 module(s)
+2026-06-08T21:43:44.431289Z  INFO move_prover_boogie_backend::boogie_backend::bytecode_translator: 82 verification conditions
+2026-06-08T21:43:44.431337Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_Check.bpl`
+2026-06-08T21:43:44.431548Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:43:44.431554Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -infer:j -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -printVerifiedProceduresCount:0 -proverOpt:O:model_validate=true -inferModifies -proverOpt:PROVER_PATH=/root/.local/bin/z3 output/mandate_spec::authorize_respects_cap_spec_Check.bpl -vcsCores:4 -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 -printModel:1 -enhancedErrorMessages:1
+2026-06-08T21:43:45.133108Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:43:45.133856Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_Check.bpl.log
+2026-06-08T21:43:45.134309Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_Assume.bpl`
+2026-06-08T21:43:45.134467Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:43:45.134471Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -printModel:1 -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 -vcsCores:4 -infer:j -proverOpt:PROVER_PATH=/root/.local/bin/z3 -inferModifies output/mandate_spec::authorize_respects_cap_spec_Assume.bpl -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -printVerifiedProceduresCount:0 -enhancedErrorMessages:1 -proverOpt:O:model_validate=true
+2026-06-08T21:43:45.688058Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:43:45.688085Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_Assume.bpl.log
+2026-06-08T21:43:45.688760Z DEBUG move_prover_boogie_backend::generator: writing boogie to `output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl`
+2026-06-08T21:43:45.688957Z  INFO move_prover_boogie_backend::boogie_backend::boogie_wrapper: running solver
+2026-06-08T21:43:45.688963Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: command line: /root/.dotnet/tools/boogie -printModel:1 -inferModifies -proverOpt:O:model_validate=true -infer:j -proverOpt:O:smt.QI.EAGER_THRESHOLD=10 output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl -proverOpt:PROVER_PATH=/root/.local/bin/z3 -printVerifiedProceduresCount:0 -proverOpt:O:smt.QI.LAZY_THRESHOLD=100 -vcsCores:4 -enhancedErrorMessages:1
+2026-06-08T21:43:46.410417Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: analyzing boogie output
+2026-06-08T21:43:46.410444Z DEBUG move_prover_boogie_backend::boogie_backend::boogie_wrapper: writing boogie log to output/mandate_spec::authorize_respects_cap_spec_SpecNoAbortCheck.bpl.log
+2026-06-08T21:43:46.410925Z  INFO move_prover_boogie_backend::generator: 0.000s building, 2.613s verification

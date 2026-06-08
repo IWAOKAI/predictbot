@@ -1,0 +1,8 @@
+[package]
+name = "deepedge_mandate"
+edition = "2024.beta"
+
+[dependencies]
+
+[addresses]
+deepedge_mandate = "0x0"
