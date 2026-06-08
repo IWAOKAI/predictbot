@@ -105,3 +105,26 @@ scripts/deepedge_loop.py runs one cycle:
 So an AI agent observes, decides, stores its reasoning immutably, and can
 only act within the Mandate's limits -- a verifiable autonomous agent.
 Example cycle digest: 9HZVqeiYsEHQdwh8FGwnKvC9Z3f5Vf9TPrBhvK67QUGc
+
+
+## Phase 4 — enforcement + REAL mint + record, atomic (Day 8, 2026-06-09)
+
+The full loop now places a REAL bet on live DeepBook Predict, bound to the
+Mandate, in a single PTB -- without needing execute_bet (which the bundled
+predict made impossible). The hot-potato DecisionReceipt is the glue.
+
+One transaction does all of:
+  1. mandate::authorize_with_decision(amount, hash, blob_id) -> receipt
+  2. market_key::down(oracle, expiry, strike) -> mkey
+  3. predict::mint<DUSDC>(Predict, Manager, oracle, mkey, qty, clock)
+     -- the REAL 0xf5ea predict, real position minted
+  4. mandate::record_decision_and_consume(receipt)
+
+Because the receipt has no drop, step 4 is mandatory: you cannot mint
+without passing the mandate checks AND recording the decision in the same
+tx. So a real DeepBook Predict bet is structurally bound to a calibrated,
+Walrus-stored, on-chain-hashed AI decision, inside the mandate's limits.
+
+This sidesteps the published-at / bundled-predict problem entirely: the
+mandate (one package) and the real predict (0xf5ea) are composed at the PTB
+level, not via a Move dependency.
