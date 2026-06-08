@@ -45,3 +45,20 @@ Mandate object: 0x40cc6731b2fbc447b35f4171bee72503036602fc96a12a26ad95350e8cfdbe
 So the enforcement is not just deployed — it demonstrably accepts
 valid bets, rejects over-cap bets, and makes 'authorize without
 record' structurally impossible, all on testnet.
+
+## Enforcement proven live on testnet (Day 7)
+
+Mandate object: 0x40cc6731b2fbc447b35f4171bee72503036602fc96a12a26ad95350e8cfdbe44
+(per_bet_cap 2 DUSDC, total_budget 10 DUSDC)
+
+- Test 1 (normal): PTB authorize(1 DUSDC) -> record_and_consume
+  succeeded; spent went 0 -> 1000000 on-chain.
+- Test 2 (over cap): PTB authorize(3 DUSDC) ABORTED in
+  mandate::authorize with code 2 (EPerBetExceeded); spent unchanged.
+- Type guarantee: BetReceipt has no drop/store/key, so a PTB that
+  authorizes without record_and_consume cannot even be built.
+- execute_bet<T> compiles against predict::mint (design proven).
+
+So the enforcement is not just deployed — it demonstrably accepts
+valid bets, rejects over-cap bets, and makes 'authorize without
+record' structurally impossible, all on testnet.
