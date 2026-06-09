@@ -72,6 +72,12 @@ export default function RootLayout({
               >
                 Portfolio
               </Link>
+              <Link
+                href="/agent"
+                style={{ color: "var(--text)", textDecoration: "none" }}
+              >
+                AI Agent
+              </Link>
             </nav>
           </div>
         </header>

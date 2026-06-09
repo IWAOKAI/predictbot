@@ -1,0 +1,148 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { api, AgentResult, AgentStep, MandateStatus } from "@/lib/api";
+
+const STAGE_META: Record<string, { icon: string; label: string }> = {
+  observe: { icon: "1", label: "Observe market" },
+  strategist: { icon: "2", label: "Strategist proposes" },
+  risk_officer: { icon: "3", label: "Risk Officer reviews" },
+  walrus: { icon: "4", label: "Store on Walrus" },
+  verify: { icon: "5", label: "Verify hash" },
+  enforce: { icon: "6", label: "Enforce + record on-chain" },
+};
+
+function fmtDusdc(micro: number): string {
+  return (micro / 1_000_000).toFixed(2);
+}
+
+export default function AgentPage() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<AgentResult | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [mandate, setMandate] = useState<MandateStatus | null>(null);
+
+  const loadStatus = () => {
+    api.agentStatus().then(setMandate).catch(() => {});
+  };
+  useEffect(() => { loadStatus(); }, []);
+
+  const runCycle = async () => {
+    setRunning(true); setErr(null); setResult(null);
+    try {
+      const res = await api.agentRun();
+      setResult(res);
+      loadStatus();
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "run failed");
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      <div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: "var(--text)" }}>
+          Autonomous AI Agent
+        </h1>
+        <p style={{ color: "var(--text-muted)", marginTop: 8, maxWidth: 680 }}>
+          Two Claude agents observe a live DeepBook Predict market, reason
+          against historical calibration, and act only within an on-chain
+          Mandate. Every decision is stored on Walrus and hash-anchored
+          on-chain, so the whole loop is independently verifiable.
+        </p>
+      </div>
+
+      {mandate && (
+        <div style={{ border: "1px solid var(--border)", borderRadius: 12, padding: 20, background: "#ffffff" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <span style={{ fontWeight: 600, color: "var(--text)" }}>Mandate (on-chain enforcement)</span>
+            <span style={{ fontSize: 12, padding: "3px 10px", borderRadius: 999, background: mandate.active ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)", color: mandate.active ? "#16a34a" : "#dc2626" }}>
+              {mandate.active ? "ACTIVE" : "KILLED"}
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", fontSize: 14, color: "var(--text-muted)" }}>
+            <div>Per-bet cap: <b style={{ color: "var(--text)" }}>{fmtDusdc(Number(mandate.per_bet_cap))} DUSDC</b></div>
+            <div>Spent: <b style={{ color: "var(--text)" }}>{fmtDusdc(Number(mandate.spent))} / {fmtDusdc(Number(mandate.total_budget))} DUSDC</b></div>
+          </div>
+          <div style={{ marginTop: 12, height: 8, background: "var(--border)", borderRadius: 999, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${Math.min(100, (Number(mandate.spent) / Number(mandate.total_budget)) * 100)}%`, background: "#0284c7" }} />
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10, marginBottom: 0 }}>
+            Formally verified (Sui Prover): authorize() can never return a receipt above the per-bet cap, for all inputs.
+          </p>
+        </div>
+      )}
+
+      <button
+        onClick={runCycle}
+        disabled={running}
+        style={{
+          alignSelf: "flex-start", padding: "12px 28px", fontSize: 16, fontWeight: 600,
+          borderRadius: 10, border: "none", cursor: running ? "default" : "pointer",
+          background: running ? "var(--border)" : "#0284c7",
+          color: running ? "var(--text-muted)" : "#fff",
+        }}
+      >
+        {running ? "Running cycle… (20-40s)" : "Run one cycle"}
+      </button>
+
+      {err && <div style={{ color: "#dc2626", fontSize: 14 }}>Error: {err}</div>}
+
+      {result && result.steps && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {result.steps.map((s: AgentStep, i: number) => (
+            <StepCard key={i} step={s} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StepCard({ step }: { step: AgentStep }) {
+  const meta = STAGE_META[step.stage] || { icon: "•", label: step.stage };
+  const vetoed = step.stage === "enforce" && step.vetoed;
+  const isReview = step.stage === "risk_officer";
+  const approved = isReview && step.review?.approved;
+  let accent = "var(--border)";
+  if (step.stage === "risk_officer") accent = approved ? "#16a34a" : "#dc2626";
+  if (step.stage === "enforce") accent = vetoed ? "#dc2626" : "#16a34a";
+  if (step.stage === "verify") accent = step.match ? "#16a34a" : "#dc2626";
+
+  return (
+    <div style={{ border: "1px solid var(--border)", borderLeft: `3px solid ${accent}`, borderRadius: 10, padding: 16, background: "#ffffff" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+        <span style={{ width: 24, height: 24, borderRadius: 999, background: "var(--border)", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700 }}>{meta.icon}</span>
+        <span style={{ fontWeight: 600, color: "var(--text)" }}>{meta.label}</span>
+      </div>
+      <div style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6 }}>
+        {step.market && (
+          <div>{step.market.asset} @ ${step.market.strike_usd.toLocaleString()} · exp {step.market.expiry.slice(0,10)} · fair P(up) {step.fair ? step.fair.up.toFixed(4) : ""}</div>
+        )}
+        {step.proposal && (
+          <div><b style={{ color: "var(--text)" }}>{step.proposal.action}</b> size {fmtDusdc(step.proposal.size)} DUSDC — {step.proposal.thesis}</div>
+        )}
+        {step.review && (
+          <div>
+            <b style={{ color: approved ? "#16a34a" : "#dc2626" }}>{approved ? "APPROVED" : "VETO"}</b>
+            {" "}(calibration-adjusted P(up) {step.review.calibration_adjusted_prob}) — {step.review.verdict}
+          </div>
+        )}
+        {step.blob_id && (
+          <div>Walrus blob: <code style={{ fontSize: 12 }}>{step.blob_id}</code><br/>sha256: <code style={{ fontSize: 12 }}>{step.sha256}</code></div>
+        )}
+        {step.stage === "verify" && (
+          <div>{step.match ? "✓ blob re-hashes to the on-chain value" : "✗ hash mismatch"}</div>
+        )}
+        {step.stage === "enforce" && !vetoed && step.digest && (
+          <div>Recorded on-chain · spent {fmtDusdc(step.spent_amount || 0)} DUSDC<br/>digest: <code style={{ fontSize: 12 }}>{step.digest}</code></div>
+        )}
+        {vetoed && (
+          <div>No on-chain spend — the Risk Officer vetoed. Reasoning still stored on Walrus.</div>
+        )}
+      </div>
+    </div>
+  );
+}

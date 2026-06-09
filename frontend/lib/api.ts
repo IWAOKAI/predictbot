@@ -54,6 +54,16 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json();
 }
 
+async function postJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`POST ${path} failed: ${res.status}`);
+  return res.json();
+}
+
+
 
 // --- Strike grid (single market detail) ---
 
@@ -155,6 +165,39 @@ export interface ManagerSummary {
   balances: { quote_asset: string; balance: number }[];
 }
 
+export interface AgentStep {
+  stage: string;
+  status: string;
+  market?: { asset: string; expiry: string; strike_usd: number; oracle_id: string };
+  fair?: { up: number; down: number };
+  proposal?: { action: string; size: number; thesis: string };
+  review?: { approved: boolean; adjusted_size: number; calibration_adjusted_prob: number; verdict: string };
+  blob_id?: string;
+  sha256?: string;
+  match?: boolean;
+  spent_amount?: number;
+  digest?: string;
+  vetoed?: boolean;
+  reason?: string;
+  error?: string;
+}
+
+export interface AgentResult {
+  ok: boolean;
+  approved?: boolean;
+  final_size?: number;
+  steps: AgentStep[];
+  error?: string;
+}
+
+export interface MandateStatus {
+  mandate_id: string;
+  per_bet_cap: string;
+  total_budget: string;
+  spent: string;
+  active: boolean;
+}
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
@@ -168,4 +211,6 @@ export const api = {
     getJson<PositionsResponse>(`/api/manager/positions?manager=${managerId}`),
   summary: (managerId: string) =>
     getJson<ManagerSummary>(`/api/manager/summary?manager=${managerId}`),
+  agentRun: () => postJson<AgentResult>("/api/agent/run"),
+  agentStatus: () => getJson<MandateStatus>("/api/agent/status"),
 };

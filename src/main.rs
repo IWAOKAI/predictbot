@@ -1,5 +1,5 @@
 use axum::{
-    routing::get,
+    routing::{get, post},
     http::StatusCode,
     Json, Router,
 };
@@ -7,7 +7,7 @@ use serde::Serialize;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use deepedge::api::{AppState, list_markets, get_market, get_strikes, get_edges, get_manager, get_positions, get_summary};
+use deepedge::api::{AppState, list_markets, get_market, get_strikes, get_edges, get_manager, get_positions, get_summary, run_agent, agent_status};
 use deepedge::api::backtest::{calibration, accuracy};
 use deepedge::client::PredictServerClient;
 use tower_http::cors::CorsLayer;
@@ -56,6 +56,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/manager", get(get_manager))
         .route("/api/manager/positions", get(get_positions))
         .route("/api/manager/summary", get(get_summary))
+        .route("/api/agent/run", post(run_agent))
+        .route("/api/agent/status", get(agent_status))
         .fallback(fallback)
         .layer(CorsLayer::permissive())
         .with_state(state);
