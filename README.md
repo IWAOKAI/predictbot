@@ -67,13 +67,128 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 
 ---
 
-## Five screens
+## The verifiable AI agent (built and working)
+
+DeepEdge is not just a dashboard a human reads. The same fair-value
+engine and calibration data drive an AI agent that *acts* -- and every
+part of how it acts is constrained, recorded, and independently
+verifiable. The analytics and the agent are two halves of one system:
+the agent's judgement is only as good as the honest calibration beneath
+it, and the calibration only matters if something acts on it safely.
+
+Open the **AI Agent** screen and press **Run one cycle**. Live, in the
+browser, you watch the full loop:
+
+```
+observe market + fair value + calibration
+  -> Strategist agent proposes a bet (maximise EV)
+  -> Risk Officer agent reviews it against calibration + limits
+  -> store the full decision record on Walrus
+  -> SHA-256 the record
+  -> enforce the Mandate on-chain + record the decision
+  -> fetch the blob back, re-hash, confirm it matches on-chain
+```
+
+### Two agents, and one can say no
+
+Two Claude agents split the decision. The **Strategist** proposes a bet
+to maximise expected value. A separate **Risk Officer** reviews that
+proposal against the historical calibration and the Mandate limits, and
+can **veto** it outright.
+
+This is where the honest calibration becomes a weapon. In a typical
+run the Strategist proposes a maximum BET_DOWN, citing a ~4.5% edge.
+The Risk Officer vetoes it:
+
+> VETO. The model's probability falls in the 0.40-0.50 bucket where
+> historical calibration shows actual outcomes occur only ~26% of the
+> time versus ~47% implied, producing catastrophic negative ROI. The
+> Strategist's apparent edge evaporates when calibrated.
+
+One AI's optimism is caught by another AI armed with DeepEdge's own
+record of where the market lies. No bet is placed.
+
+### On-chain enforcement -- the hard rail
+
+Below the agents sits a Move contract (`mandate`) that the agent
+**cannot** talk its way around. Authorising a bet returns a
+`BetReceipt` / `DecisionReceipt` -- a hot-potato with no `drop`
+ability, so the transaction *must* record the spend and pass the
+Mandate's checks or it does not execute at all. The Mandate enforces a
+per-bet cap, a cumulative budget, and a kill switch.
+
+These guarantees are not just tested -- they are **formally verified**.
+
+- **7 Move unit tests** prove each safety property (over-cap aborts,
+  over-budget aborts, kill switch rejects, decision-bound recording).
+- **The Sui Prover** (Boogie + Z3) proves the core guarantee over ALL
+  possible `u64` inputs, not just examples:
+
+```move
+#[spec(prove)]
+fun authorize_respects_cap_spec(m: &Mandate, amount: u64): BetReceipt {
+    requires(is_active(m));
+    requires(amount <= per_bet_cap(m));
+    requires(spent(m).to_int().add(amount.to_int())
+               .lte(total_budget(m).to_int()));
+    let r = authorize(m, amount);
+    ensures(receipt_amount(&r) <= per_bet_cap(m));   // proven
+    ensures(receipt_amount(&r) == amount);           // proven
+    r
+}
+// Result: Verification successful
+```
+
+A successful `authorize()` can *never* return a receipt above the
+per-bet cap -- mathematically, for every input. (During development the
+prover even caught a real u64-overflow edge case in a naive
+precondition, the kind of bug testing misses.)
+
+### Real bets, bound to the decision
+
+The agent does not bet against a toy contract. One PTB composes the
+Mandate with the **real DeepBook Predict** `predict::mint`:
+
+```
+mandate::authorize_with_decision(amount, hash, blob_id) -> receipt
+market_key::down(oracle, expiry, strike) -> mkey
+predict::mint<DUSDC>(Predict, Manager, oracle, mkey, qty, clock)
+mandate::record_decision_and_consume(receipt)
+```
+
+Because the receipt is a hot-potato, a real on-chain position cannot be
+minted without passing the Mandate's checks *and* recording the
+calibration-aware, Walrus-stored, hash-anchored decision in the same
+transaction. Real positions have been minted this way on testnet.
+
+### Verifiable memory on Walrus
+
+Every decision -- the market it saw, both agents' reasoning, the chosen
+size -- is written to **Walrus** and its SHA-256 hash is emitted
+on-chain in a `DecisionRecorded` event. Anyone can fetch the blob,
+re-hash it, and confirm it matches the on-chain hash. The agent has a
+tamper-proof, auditable memory: you can prove exactly *why* any past
+position was taken. This is the accountability real financial decisions
+demand.
+
+### On-chain proof (testnet)
+
+- Mandate package: `0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a`
+- Mandate object: `0x753fb2e637d42067aeea59df6044ddfeb37ac22c92f28c89a8ffc6e3a4635f3a`
+- Example verifiable-loop cycle: digest `9HZVqeiYsEHQdwh8FGwnKvC9Z3f5Vf9TPrBhvK67QUGc`
+- Real DeepBook Predict positions minted on testnet, including via the atomic Mandate + `predict::mint` PTB
+
+
+---
+
+## Six screens
 
 - **Markets** — every live BTC oracle, sorted by expiry, with "closing soon" flags.
 - **Overview** — DeepEdge fair value across all live markets in one table; the whole board at a glance.
 - **Market detail** — the SVI volatility smile, a full fair-probability table by strike, live auto-refresh every 30s, and the bet panel.
 - **Insights** — the calibration backtest, visualized: where the market is mispriced, by direction.
 - **Portfolio** — your on-chain betting history, account value, and realized P&L.
+- **AI Agent** — the verifiable autonomous loop, live: press *Run one cycle* and watch the Strategist propose, the Risk Officer veto, the decision land on Walrus, the hash verify, and the Mandate enforce — all on-chain.
 
 **Overview** — fair value across every live market:
 
@@ -121,15 +236,14 @@ DeepBook Predict launches on mainnet in Q3, and hackathon projects are expected 
 - **Edge ranking.** On testnet, live order-flow is too thin to rank markets by fair-vs-market edge (we verified: market quotes are near-zero across active markets, so this would be vapor). On mainnet, with real participants, DeepEdge will rank the most mispriced bets in real time — the natural extension of the calibration work.
 - **Deeper position analytics** as settled history accumulates.
 
-### The longer-term vision: a verifiable AI layer
+### What's next
 
-DeepEdge today surfaces the math so a human can judge each bet. The natural next step is an AI layer that *acts* on that math, accountably:
-
-- An agent prices and places bets using DeepEdge's fair-value engine.
-- Every decision — the market data it saw, the fair value it computed, and the bet it chose — is written to **Walrus** as a tamper-proof record.
-- The agent learns from its own settled outcomes over time.
-
-Financial decisions demand accountability; regulators require firms to explain *why* a given call was made. An on-chain, Walrus-backed decision log gives an AI agent a **verifiable memory** — anyone can later audit exactly why a position was taken. The calibration work in DeepEdge today is the foundation such judgment would build on. This is the direction DeepEdge points toward; the current submission is the working analytics-and-betting layer beneath it.
+The verifiable AI agent above is built and working on testnet today. The
+natural next steps: rank the most mispriced markets in real time once
+mainnet order-flow is live, let the agent learn from its own settled
+outcomes (its Walrus memory makes this auditable), and extend the
+formal-verification specs to cover the budget and recording invariants as
+well as the per-bet cap.
 
 
 ---
