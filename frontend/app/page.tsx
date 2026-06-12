@@ -20,6 +20,7 @@ function timeUntil(expiryMs: number): string {
 
 export default function MarketsPage() {
   const [markets, setMarkets] = useState<MarketSummary[]>([]);
+  const [fairMap, setFairMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,10 +32,39 @@ export default function MarketsPage() {
           .filter((m) => m.status === "active")
           .sort((a, b) => a.expiry - b.expiry);
         setMarkets(active);
+        // Fetch each market's ATM fair P(up) in parallel, so we can flag
+        // the largest-edge market and the calibration-caution bucket.
+        Promise.allSettled(active.map((m) => api.strikes(m.oracle_id))).then(
+          (results) => {
+            const fm: Record<string, number> = {};
+            results.forEach((r, i) => {
+              if (r.status === "fulfilled") {
+                const g = r.value.grid;
+                const atm = g.strikes.reduce((best, row) =>
+                  Math.abs(row.strike_usd - g.atm_strike_usd) <
+                  Math.abs(best.strike_usd - g.atm_strike_usd) ? row : best,
+                  g.strikes[0]);
+                fm[active[i].oracle_id] = atm.fair_up;
+              }
+            });
+            setFairMap(fm);
+          }
+        );
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  // Which active market has the largest edge (fair furthest from 0.50)?
+  const largestEdgeId = (() => {
+    let id: string | null = null;
+    let best = -1;
+    for (const [oid, fair] of Object.entries(fairMap)) {
+      const d = Math.abs(fair - 0.5);
+      if (d > best) { best = d; id = oid; }
+    }
+    return id;
+  })();
 
   return (
     <div>
@@ -90,7 +120,7 @@ export default function MarketsPage() {
             }}
           >
             {markets.map((m) => (
-              <MarketCard key={m.oracle_id} market={m} />
+              <MarketCard key={m.oracle_id} market={m} fair={fairMap[m.oracle_id]} isLargestEdge={m.oracle_id === largestEdgeId} />
             ))}
           </div>
         </>
@@ -99,7 +129,7 @@ export default function MarketsPage() {
   );
 }
 
-function MarketCard({ market }: { market: MarketSummary }) {
+function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fair?: number; isLargestEdge?: boolean }) {
   return (
     <Link
       href={`/market/${market.oracle_id}`}
@@ -136,6 +166,28 @@ function MarketCard({ market }: { market: MarketSummary }) {
             }}
           >
             closing soon
+          </span>
+        )}
+        {isLargestEdge && (
+          <span
+            style={{
+              fontSize: 11, fontWeight: 700, color: "#7c2d12",
+              background: "#fed7aa", padding: "2px 8px", borderRadius: 999,
+            }}
+            title="Fair probability is furthest from 50/50 - the agent's pick"
+          >
+            largest edge
+          </span>
+        )}
+        {isLargestEdge && fair !== undefined && fair >= 0.4 && fair < 0.5 && (
+          <span
+            style={{
+              fontSize: 11, fontWeight: 700, color: "#9a3412",
+              background: "#ffedd5", padding: "2px 8px", borderRadius: 999,
+            }}
+            title="This market's fair value sits in the 0.40-0.50 calibration bucket, where the market is historically least reliable - exactly why the Risk Officer scrutinises the agent's pick here"
+          >
+            calibration: caution
           </span>
         )}
       </div>
