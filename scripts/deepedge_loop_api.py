@@ -134,7 +134,9 @@ def run_cycle_json():
     result = {"ok": False, "steps": steps}
     try:
         # 1. observe
-        oid, oracle, near, cal = observe(None)
+        # Use a market in the 0.40-0.50 calibration bucket so the demo shows
+        # the Risk Officer actually using the calibration to veto.
+        oid, oracle, near, cal = observe("0x5b5f283a8decb5114958639a8d5903a925507eb65c75890c09dd7e4ef7801335")
         steps.append({"stage": "observe", "status": "done",
             "market": {"asset": oracle["underlying_asset"],
                        "expiry": oracle["expiry_iso"],
@@ -172,21 +174,28 @@ def run_cycle_json():
         ok = verify(blob_id, hash_hex)
         steps.append({"stage": "verify", "status": "done", "match": ok})
 
-        # 6. enforce + record (only if approved)
+        # 6. enforce + record -- three distinct outcomes
         if approved and size > 0:
+            # (A) approved with a real size -> bet on-chain
             res = enforce_and_record(size, hash_hex, blob_id)
             if res.returncode == 0:
                 dg = [l.strip() for l in res.stdout.splitlines() if "Transaction Digest" in l]
                 digest = dg[0].split(":")[-1].strip() if dg else ""
                 steps.append({"stage": "enforce", "status": "done",
-                    "spent_amount": size, "digest": digest, "vetoed": False})
+                    "outcome": "bet", "spent_amount": size, "digest": digest})
             else:
                 steps.append({"stage": "enforce", "status": "error",
-                    "error": res.stderr[-300:]})
+                    "outcome": "error", "error": res.stderr[-300:]})
+        elif not approved:
+            # (B) Risk Officer vetoed the Strategist's proposal
+            steps.append({"stage": "enforce", "status": "done",
+                "outcome": "veto",
+                "reason": review.get("verdict", "Risk Officer vetoed the proposal")})
         else:
-            steps.append({"stage": "enforce", "status": "vetoed",
-                "vetoed": True,
-                "reason": review.get("verdict", "Risk Officer vetoed")})
+            # (C) approved, but the proposal itself was NO_BET (no edge)
+            steps.append({"stage": "enforce", "status": "done",
+                "outcome": "no_bet",
+                "reason": review.get("verdict", "Both agents agreed there is no edge")})
 
         result["ok"] = True
         result["approved"] = approved
