@@ -171,6 +171,20 @@ tamper-proof, auditable memory: you can prove exactly *why* any past
 position was taken. This is the accountability real financial decisions
 demand.
 
+### The ledger: every decision, auditable forever
+
+Each cycle -- whether it ends in a bet, a veto, or a no-bet -- is appended
+to a persistent ledger with the market observed, both agents' reasoning,
+the outcome, and the Walrus blob id + SHA-256 of the full decision record.
+The **Ledger** screen renders this history with a per-entry *Verify hash*
+button: your browser re-fetches the blob from Walrus, re-hashes it, and
+confirms it matches -- client-side, no trust required. The summary shows
+how much capital the Risk Officer's vetoes protected.
+
+This is the difference between an agent that trades and an agent you can
+hold accountable: not just *what* it did, but *why*, provably, for every
+single decision it ever made.
+
 ### On-chain proof (testnet)
 
 - Mandate package: `0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a`
@@ -181,7 +195,7 @@ demand.
 
 ---
 
-## Six screens
+## Seven screens
 
 - **Markets** — every live BTC oracle, sorted by expiry, with "closing soon" flags.
 - **Overview** — DeepEdge fair value across all live markets in one table; the whole board at a glance.
@@ -189,6 +203,7 @@ demand.
 - **Insights** — the calibration backtest, visualized: where the market is mispriced, by direction.
 - **Portfolio** — your on-chain betting history, account value, and realized P&L.
 - **AI Agent** — the verifiable autonomous loop, live: press *Run one cycle* and watch the Strategist propose, the Risk Officer veto, the decision land on Walrus, the hash verify, and the Mandate enforce — all on-chain.
+- **Ledger** — the agent's entire decision history, auditable: every cycle (bet, veto, or no-bet) with both agents' reasoning, its Walrus blob and SHA-256, and a *Verify hash* button that re-fetches the blob and re-checks the hash in your browser. A trading bot says "trust me"; this page says "check me".
 
 **Overview** — fair value across every live market:
 
