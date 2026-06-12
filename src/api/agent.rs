@@ -4,6 +4,11 @@ use std::process::Command;
 
 use crate::api::markets::AppState;
 
+const RPC: &str = "https://fullnode.testnet.sui.io:443";
+const PACKAGE: &str = "0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a";
+const MANDATE: &str = "0x753fb2e637d42067aeea59df6044ddfeb37ac22c92f28c89a8ffc6e3a4635f3a";
+
+
 /// POST /api/agent/run
 /// Runs ONE full two-agent autonomous cycle (Strategist proposes, Risk
 /// Officer reviews/vetoes), stores the decision on Walrus, hashes it,
@@ -44,8 +49,6 @@ pub async fn run_agent(
 pub async fn agent_status(
     State(_state): State<AppState>,
 ) -> Result<Json<Value>, (StatusCode, String)> {
-    const MANDATE: &str = "0x753fb2e637d42067aeea59df6044ddfeb37ac22c92f28c89a8ffc6e3a4635f3a";
-    const RPC: &str = "https://fullnode.testnet.sui.io";
 
     let body = serde_json::json!({
         "jsonrpc": "2.0", "id": 1, "method": "sui_getObject",
@@ -142,6 +145,41 @@ pub async fn agent_ledger(
             "sha256": sha256,
             "digest": digest,
         }));
+    }
+
+    // Enrich with on-chain DecisionRecorded events: match by blob_id so
+    // each bet that actually hit the chain carries its tx digest, which the
+    // UI links to suivision. This ties the local audit trail to the chain.
+    let rpc_body = serde_json::json!({
+        "jsonrpc": "2.0", "id": 1,
+        "method": "suix_queryEvents",
+        "params": [
+            {"MoveEventType": format!("{}::mandate::DecisionRecorded", PACKAGE)},
+            null, 50, true
+        ]
+    });
+    let client = reqwest::Client::new();
+    if let Ok(resp) = client.post(RPC).json(&rpc_body).send().await {
+        if let Ok(j) = resp.json::<Value>().await {
+            if let Some(evs) = j["result"]["data"].as_array() {
+                // build blob_id -> tx digest map
+                let mut chain: std::collections::HashMap<String, String> = std::collections::HashMap::new();
+                for e in evs {
+                    let blob = e["parsedJson"]["blob_id"].as_str().unwrap_or("").to_string();
+                    let dg = e["id"]["txDigest"].as_str().unwrap_or("").to_string();
+                    if !blob.is_empty() && !dg.is_empty() {
+                        chain.insert(blob, dg);
+                    }
+                }
+                for ent in entries.iter_mut() {
+                    if let Some(blob) = ent["blob_id"].as_str() {
+                        if let Some(dg) = chain.get(blob) {
+                            ent["onchain_digest"] = Value::String(dg.clone());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     entries.reverse(); // newest first

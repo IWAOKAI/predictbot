@@ -134,11 +134,21 @@ function LedgerCard({ entry, index }: { entry: LedgerEntry; index: number }) {
         </div>
       )}
 
-      {entry.digest && (
+      {(entry.digest || (entry as unknown as { onchain_digest?: string }).onchain_digest) ? (
         <div style={{ marginTop: 8, fontSize: 12 }}>
-          on-chain digest: <code>{entry.digest}</code>
+          {(() => {
+            const dg = entry.digest || (entry as unknown as { onchain_digest?: string }).onchain_digest || "";
+            return (
+              <span>
+                on-chain:{" "}
+                <a href={"https://testnet.suivision.xyz/txblock/" + dg} target="_blank" rel="noopener noreferrer" style={{ color: "#0284c7", fontWeight: 600 }}>
+                  <code>{dg.slice(0, 24)}</code>… ↗ view on suivision
+                </a>
+              </span>
+            );
+          })()}
         </div>
-      )}
+      ) : null}
 
       {entry.blob_id && (
         <div style={{ marginTop: 10, fontSize: 12, color: "var(--text-muted)", wordBreak: "break-all" }}>
