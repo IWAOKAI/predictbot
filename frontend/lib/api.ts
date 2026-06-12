@@ -223,6 +223,12 @@ export interface LedgerResponse {
   entries: LedgerEntry[];
 }
 
+
+export interface SurfaceHealthPoint { strike_usd: number; log_moneyness: number; g: number; }
+export interface SurfaceHealth { arbitrage_free: boolean; min_g: number; points: SurfaceHealthPoint[]; }
+export interface SurfaceHealthResponse { oracle: MarketSummary; health: SurfaceHealth | null; }
+export interface CalendarHealth { arbitrage_free: boolean; pairs_checked: number; violations: number; note: string; }
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
@@ -239,4 +245,6 @@ export const api = {
   agentRun: () => postJson<AgentResult>("/api/agent/run"),
   agentStatus: () => getJson<MandateStatus>("/api/agent/status"),
   agentLedger: () => getJson<LedgerResponse>("/api/agent/ledger"),
+  surfaceHealth: (oracleId: string) => getJson<SurfaceHealthResponse>(`/api/markets/${oracleId}/surface-health`),
+  calendarHealth: () => getJson<CalendarHealth>("/api/surface/calendar-health"),
 };

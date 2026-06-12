@@ -263,3 +263,57 @@ mod tests {
         assert!((mid.strike_usd - grid.atm_strike_usd).abs() < 1e-6);
     }
 }
+
+/// Butterfly-arbitrage health of a single oracle's SVI surface.
+/// Evaluates Gatheral's g(k) across the strike grid; the surface is
+/// butterfly-arbitrage-free iff g(k) >= 0 everywhere.
+#[derive(serde::Serialize)]
+pub struct SurfaceHealth {
+    pub arbitrage_free: bool,
+    pub min_g: f64,
+    pub points: Vec<SurfaceHealthPoint>,
+}
+
+#[derive(serde::Serialize)]
+pub struct SurfaceHealthPoint {
+    pub strike_usd: f64,
+    pub log_moneyness: f64,
+    pub g: f64,
+}
+
+pub fn compute_surface_health(
+    oracle: &crate::types::Oracle,
+    price: &crate::types::OraclePrice,
+    svi: &crate::types::OracleSvi,
+    num_strikes: usize,
+    step_ticks: i64,
+) -> SurfaceHealth {
+    let params = SviParams::from_event(svi);
+    let forward = price.forward_usd();
+    let tick = oracle.tick_size_usd();
+    let atm = (forward / tick).round() * tick;
+
+    let half = (num_strikes / 2) as i64;
+    let mut points = Vec::new();
+    let mut min_g = f64::INFINITY;
+
+    for i in -half..=half {
+        let strike = atm + (i as f64) * (step_ticks as f64) * tick;
+        if strike <= 0.0 {
+            continue;
+        }
+        let k = (strike / forward).ln();
+        let g = params.butterfly_g(k);
+        if g < min_g {
+            min_g = g;
+        }
+        points.push(SurfaceHealthPoint { strike_usd: strike, log_moneyness: k, g });
+    }
+
+    SurfaceHealth {
+        arbitrage_free: min_g >= 0.0,
+        min_g,
+        points,
+    }
+}
+

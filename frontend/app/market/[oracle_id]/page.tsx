@@ -18,10 +18,22 @@ import {
 } from "recharts";
 
 export default function MarketDetailPage() {
+  useEffect(() => {
+    const oid = typeof window !== "undefined" ? window.location.pathname.split("/").pop() : null;
+    if (oid) {
+      import("@/lib/api").then(({ api }) => {
+        api.surfaceHealth(oid).then((r) => {
+          if (r.health) setSurfaceHealth({ arbitrage_free: r.health.arbitrage_free, min_g: r.health.min_g });
+        }).catch(() => {});
+      });
+    }
+  }, []);
+
   const params = useParams();
   const oracleId = params.oracle_id as string;
 
   const [data, setData] = useState<StrikesResponse | null>(null);
+  const [surfaceHealth, setSurfaceHealth] = useState<{ arbitrage_free: boolean; min_g: number } | null>(null);
   const [edges, setEdges] = useState<EdgesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +185,11 @@ export default function MarketDetailPage() {
       <div className="card" style={{ padding: 24, marginBottom: 24 }}>
         <h2 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 4px" }}>
           Volatility smile (SVI)
+          {surfaceHealth && (
+            <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700, padding: "2px 10px", borderRadius: 999, color: surfaceHealth.arbitrage_free ? "#15803d" : "#b45309", background: surfaceHealth.arbitrage_free ? "#dcfce7" : "#fef3c7" }}>
+              {surfaceHealth.arbitrage_free ? `arbitrage-free ✓ (min g ${surfaceHealth.min_g.toFixed(2)})` : `butterfly check: review (min g ${surfaceHealth.min_g.toFixed(2)})`}
+            </span>
+          )}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-muted)", margin: "0 0 18px" }}>
           Implied volatility (IV) — how big a price swing the market expects,

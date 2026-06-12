@@ -86,3 +86,74 @@ mod tests {
         }
     }
 }
+
+impl SviParams {
+    /// First derivative of total variance: w'(k) = b(rho + (k-m)/sqrt((k-m)^2 + sigma^2))
+    pub fn w_prime(&self, k: f64) -> f64 {
+        let dx = k - self.m;
+        let radical = (dx * dx + self.sigma * self.sigma).sqrt();
+        self.b * (self.rho + dx / radical)
+    }
+
+    /// Second derivative: w''(k) = b * sigma^2 / ((k-m)^2 + sigma^2)^(3/2)
+    pub fn w_double_prime(&self, k: f64) -> f64 {
+        let dx = k - self.m;
+        let s2 = dx * dx + self.sigma * self.sigma;
+        self.b * self.sigma * self.sigma / (s2 * s2.sqrt())
+    }
+
+    /// Gatheral's butterfly-arbitrage function. The surface is free of
+    /// butterfly arbitrage at k iff g(k) >= 0:
+    ///   g(k) = (1 - k w'/(2w))^2 - (w'^2/4)(1/w + 1/4) + w''/2
+    pub fn butterfly_g(&self, k: f64) -> f64 {
+        let w = self.total_variance(k);
+        if w <= 0.0 {
+            return f64::NEG_INFINITY; // degenerate surface
+        }
+        let wp = self.w_prime(k);
+        let wpp = self.w_double_prime(k);
+        let term1 = (1.0 - k * wp / (2.0 * w)).powi(2);
+        let term2 = (wp * wp / 4.0) * (1.0 / w + 0.25);
+        term1 - term2 + wpp / 2.0
+    }
+}
+
+#[cfg(test)]
+mod arbitrage_tests {
+    use super::*;
+
+    fn sample() -> SviParams {
+        SviParams { a: 0.04, b: 0.4, rho: -0.4, m: 0.0, sigma: 0.1 }
+    }
+
+    #[test]
+    fn w_prime_matches_finite_difference() {
+        let p = sample();
+        let h = 1e-6;
+        for k in [-0.3, -0.1, 0.0, 0.05, 0.2] {
+            let fd = (p.total_variance(k + h) - p.total_variance(k - h)) / (2.0 * h);
+            assert!((p.w_prime(k) - fd).abs() < 1e-5, "w' mismatch at k={}", k);
+        }
+    }
+
+    #[test]
+    fn w_double_prime_matches_finite_difference() {
+        let p = sample();
+        let h = 1e-4;
+        for k in [-0.3, -0.1, 0.0, 0.05, 0.2] {
+            let fd = (p.total_variance(k + h) - 2.0 * p.total_variance(k)
+                + p.total_variance(k - h)) / (h * h);
+            assert!((p.w_double_prime(k) - fd).abs() < 1e-4, "w'' mismatch at k={}", k);
+        }
+    }
+
+    #[test]
+    fn sane_surface_is_butterfly_free_near_atm() {
+        let p = sample();
+        for i in -20..=20 {
+            let k = i as f64 * 0.01;
+            assert!(p.butterfly_g(k) >= 0.0, "g(k)<0 at k={} for a sane surface", k);
+        }
+    }
+}
+

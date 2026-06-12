@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::client::PredictServerClient;
 use crate::engine::{
-    compute_edge_score, compute_strike_grid, compute_edge_grid,
+    compute_edge_score, compute_strike_grid, compute_edge_grid, compute_surface_health,
     EdgeScore, StrikeGrid, EdgeGrid, MarketAskIndex,
 };
 use crate::types::{Oracle, OracleState, ManagerSummary};
@@ -178,6 +178,43 @@ pub async fn get_strikes(
 
 
 #[derive(Serialize)]
+pub struct SurfaceHealthResponse {
+    pub oracle: MarketSummary,
+    pub health: Option<crate::engine::strike_grid::SurfaceHealth>,
+}
+
+/// GET /api/markets/:oracle_id/surface-health
+/// Butterfly-arbitrage check on the oracle's SVI surface: evaluates
+/// Gatheral's g(k) across strikes; arbitrage_free iff min g(k) >= 0.
+pub async fn get_surface_health(
+    State(state): State<AppState>,
+    Path(oracle_id): Path<String>,
+    Query(q): Query<StrikesQuery>,
+) -> Result<Json<SurfaceHealthResponse>, (StatusCode, String)> {
+    let oracle_state = state
+        .predict_client
+        .oracle_state(&oracle_id)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    let num_strikes = q.num.unwrap_or(15);
+    let step_ticks = q.step.unwrap_or(50);
+
+    let health = match (&oracle_state.latest_price, &oracle_state.latest_svi) {
+        (Some(price), Some(svi)) => Some(compute_surface_health(
+            &oracle_state.oracle, price, svi, num_strikes, step_ticks,
+        )),
+        _ => None,
+    };
+
+    Ok(Json(SurfaceHealthResponse {
+        oracle: MarketSummary::from(&oracle_state.oracle),
+        health,
+    }))
+}
+
+
+#[derive(Serialize)]
 pub struct EdgesResponse {
     pub oracle: MarketSummary,
     pub edge_grid: Option<EdgeGrid>,
@@ -222,6 +259,71 @@ pub async fn get_edges(
     Ok(Json(EdgesResponse {
         oracle: MarketSummary::from(&oracle_state.oracle),
         edge_grid,
+    }))
+}
+
+
+#[derive(Serialize)]
+pub struct CalendarHealthResponse {
+    pub arbitrage_free: bool,
+    pub pairs_checked: usize,
+    pub violations: usize,
+    pub note: String,
+}
+
+/// GET /api/surface/calendar-health
+/// Calendar-arbitrage check across all active oracles: total variance must
+/// be non-decreasing in maturity at a fixed log-moneyness. We sample a
+/// shared k-grid and confirm w_T2(k) >= w_T1(k) for every T2 > T1.
+pub async fn get_calendar_health(
+    State(state): State<AppState>,
+) -> Result<Json<CalendarHealthResponse>, (StatusCode, String)> {
+    let oracles = state
+        .predict_client
+        .list_active_oracles(PREDICT_ID)
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    let now_ms = chrono::Utc::now().timestamp_millis();
+
+    // Collect (seconds_to_expiry, SviParams) for active oracles with SVI.
+    let mut curves: Vec<(i64, crate::engine::svi::SviParams)> = Vec::new();
+    for o in &oracles {
+        if let Ok(st) = state.predict_client.oracle_state(&o.oracle_id).await {
+            if let Some(svi) = &st.latest_svi {
+                let secs = st.oracle.seconds_until_expiry(now_ms);
+                if secs > 0 {
+                    curves.push((secs, crate::engine::svi::SviParams::from_event(svi)));
+                }
+            }
+        }
+    }
+    curves.sort_by_key(|(s, _)| *s);
+
+    // Shared log-moneyness grid.
+    let ks: Vec<f64> = (-10..=10).map(|i| i as f64 * 0.01).collect();
+    let mut pairs = 0usize;
+    let mut violations = 0usize;
+    for a in 0..curves.len() {
+        for b in (a + 1)..curves.len() {
+            pairs += 1;
+            let (_, ref pa) = curves[a];
+            let (_, ref pb) = curves[b];
+            // pb is the longer maturity; require w_b(k) >= w_a(k) - eps
+            for &k in &ks {
+                if pb.total_variance(k) + 1e-9 < pa.total_variance(k) {
+                    violations += 1;
+                    break;
+                }
+            }
+        }
+    }
+
+    Ok(Json(CalendarHealthResponse {
+        arbitrage_free: violations == 0,
+        pairs_checked: pairs,
+        violations,
+        note: format!("{} active SVI curves compared on a shared log-moneyness grid", curves.len()),
     }))
 }
 

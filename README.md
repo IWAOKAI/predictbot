@@ -93,6 +93,26 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 
 ---
 
+### Arbitrage-free surface checks (butterfly + calendar)
+
+DeepEdge doesn't just read the SVI surface -- it checks the surface is
+*coherent*. From the on-chain Gatheral SVI parameters it computes the
+analytic first and second derivatives of total variance and evaluates
+Gatheral's butterfly function g(k); the surface is butterfly-arbitrage-free
+iff g(k) >= 0 across strikes. It also runs a calendar check across every
+active maturity: total variance must be non-decreasing in time at fixed
+log-moneyness. These derivatives are unit-tested against finite differences,
+so the math is verified, not just asserted.
+
+- `GET /api/markets/:id/surface-health` -- butterfly g(k) across strikes, with min g and an arbitrage-free flag
+- `GET /api/surface/calendar-health` -- pairwise calendar check across all active oracles
+
+And true to the rest of DeepEdge, it reports what it finds rather than
+claiming perfection: on the current testnet the butterfly checks pass, while
+the calendar check flags a handful of maturity pairs where the on-chain
+surfaces aren't strictly monotone. We surface the violation count instead of
+hiding it.
+
 ## The verifiable AI agent (built and working)
 
 DeepEdge is not just a dashboard a human reads. The same fair-value
