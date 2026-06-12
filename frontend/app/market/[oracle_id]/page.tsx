@@ -166,7 +166,7 @@ export default function MarketDetailPage() {
         <Stat label="Spot" value={`$${grid.spot_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         <Stat label="Forward" value={`$${grid.forward_usd.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
         <Stat label="ATM strike" value={`$${grid.atm_strike_usd.toLocaleString()}`} />
-        <Stat label="Expires in" value={timeStr} />
+        <Stat label="Expires in" value={timeStr} sub={new Date(oracle.expiry).toISOString().slice(0, 16).replace("T", " ") + " UTC"} />
       </div>
 
       {/* SVI smile */}
@@ -322,7 +322,7 @@ function StrikeTable({ strikes, atm }: { strikes: StrikeRow[]; atm: number }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="card" style={{ padding: 16 }}>
       <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 600 }}>
@@ -331,6 +331,11 @@ function Stat({ label, value }: { label: string; value: string }) {
       <div style={{ fontSize: 22, fontWeight: 800, marginTop: 4, color: "var(--primary-dark)" }}>
         {value}
       </div>
+      {sub && (
+        <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
