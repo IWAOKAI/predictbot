@@ -210,12 +210,6 @@ function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fa
           {timeUntil(market.expiry)}
         </span>
       </div>
-      <Row
-        label="Min strike"
-        value={`$${market.min_strike_usd.toLocaleString()}`}
-      />
-      <Row label="Tick size" value={`$${market.tick_size_usd}`} />
-
       <div
         style={{
           marginTop: 14,
@@ -234,21 +228,6 @@ function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fa
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: 14,
-        padding: "4px 0",
-      }}
-    >
-      <span style={{ color: "var(--text-muted)" }}>{label}</span>
-      <span style={{ fontWeight: 600 }}>{value}</span>
-    </div>
-  );
-}
 
 function WalletBar() {
   const account = useCurrentAccount();

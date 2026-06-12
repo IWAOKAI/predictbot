@@ -16,6 +16,14 @@ function fmtDusdc(micro: number): string {
   return (micro / 1_000_000).toFixed(2);
 }
 
+function hoursUntil(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (isNaN(ms) || ms <= 0) return "expired";
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return `${h}h ${m}m`;
+}
+
 export default function AgentPage() {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<AgentResult | null>(null);
@@ -103,12 +111,14 @@ export default function AgentPage() {
 
 function StepCard({ step }: { step: AgentStep }) {
   const meta = STAGE_META[step.stage] || { icon: "•", label: step.stage };
-  const vetoed = step.stage === "enforce" && step.vetoed;
+  const outcome = step.outcome;  // "bet" | "veto" | "no_bet" | "error"
   const isReview = step.stage === "risk_officer";
   const approved = isReview && step.review?.approved;
   let accent = "var(--border)";
   if (step.stage === "risk_officer") accent = approved ? "#16a34a" : "#dc2626";
-  if (step.stage === "enforce") accent = vetoed ? "#dc2626" : "#16a34a";
+  if (step.stage === "enforce") {
+    accent = outcome === "bet" ? "#16a34a" : outcome === "veto" ? "#dc2626" : "#64748b";
+  }
   if (step.stage === "verify") accent = step.match ? "#16a34a" : "#dc2626";
 
   return (
@@ -119,7 +129,7 @@ function StepCard({ step }: { step: AgentStep }) {
       </div>
       <div style={{ fontSize: 14, color: "var(--text-muted)", lineHeight: 1.6 }}>
         {step.market && (
-          <div>{step.market.asset} @ ${step.market.strike_usd.toLocaleString()} · exp {step.market.expiry.slice(0,10)} · fair P(up) {step.fair ? step.fair.up.toFixed(4) : ""}</div>
+          <div>{step.market.asset} @ ${step.market.strike_usd.toLocaleString()} · exp {step.market.expiry.slice(0,10)} ({hoursUntil(step.market.expiry)}) · fair P(up) {step.fair ? step.fair.up.toFixed(4) : ""}</div>
         )}
         {step.proposal && (
           <div><b style={{ color: "var(--text)" }}>{step.proposal.action}</b> size {fmtDusdc(step.proposal.size)} DUSDC — {step.proposal.thesis}</div>
@@ -136,11 +146,17 @@ function StepCard({ step }: { step: AgentStep }) {
         {step.stage === "verify" && (
           <div>{step.match ? "✓ blob re-hashes to the on-chain value" : "✗ hash mismatch"}</div>
         )}
-        {step.stage === "enforce" && !vetoed && step.digest && (
+        {step.stage === "enforce" && outcome === "bet" && step.digest && (
           <div>Recorded on-chain · spent {fmtDusdc(step.spent_amount || 0)} DUSDC<br/>digest: <code style={{ fontSize: 12 }}>{step.digest}</code></div>
         )}
-        {vetoed && (
-          <div>No on-chain spend — the Risk Officer vetoed. Reasoning still stored on Walrus.</div>
+        {step.stage === "enforce" && outcome === "veto" && (
+          <div>No on-chain spend — the Risk Officer <b style={{ color: "#dc2626" }}>vetoed</b> the proposal. Reasoning still stored on Walrus.</div>
+        )}
+        {step.stage === "enforce" && outcome === "no_bet" && (
+          <div>No on-chain spend — both agents agreed there is <b>no edge</b> to bet on. Reasoning still stored on Walrus.</div>
+        )}
+        {step.stage === "enforce" && outcome === "error" && (
+          <div style={{ color: "#dc2626" }}>Enforcement error: {step.error}</div>
         )}
       </div>
     </div>
