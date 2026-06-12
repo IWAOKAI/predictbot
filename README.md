@@ -36,6 +36,7 @@ takes the opposite stance: every layer is constrained and checkable.
 | **Every decision stored + hash-anchored, re-verifiable** | no | **yes -- Walrus + on-chain** |
 | **A public ledger of every call it ever made** | no | **yes -- the Ledger screen** |
 | Discloses its own negative-ROI / miscalibration | rarely | **yes, openly** |
+| **Non-custodial -- never holds user funds** | varies (some are custodial) | **yes -- the agent's funds are capped by an on-chain Mandate** |
 
 A bot says *trust me*. DeepEdge says *check me* -- and gives you the
 buttons to do it: re-hash any decision against Walrus in your browser,

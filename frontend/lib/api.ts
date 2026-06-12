@@ -217,6 +217,7 @@ export interface LedgerSummary {
   no_bet: number;
   bet: number;
   protected_dusdc: number;
+  expected_loss_avoided?: number;
 }
 export interface LedgerResponse {
   summary: LedgerSummary;

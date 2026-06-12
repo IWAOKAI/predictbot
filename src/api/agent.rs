@@ -89,6 +89,7 @@ pub async fn agent_ledger(
     let mut no_bet = 0u64;
     let mut bet = 0u64;
     let mut protected: u64 = 0;
+    let mut expected_loss: f64 = 0.0; // micro-DUSDC, calibration-weighted
 
     for line in content.lines() {
         let Ok(row) = serde_json::from_str::<Value>(line) else { continue };
@@ -101,6 +102,7 @@ pub async fn agent_ledger(
         let mut fair_up = Value::Null;
         let mut proposal = Value::Null;
         let mut verdict = Value::Null;
+        let mut verdict_prob: Option<f64> = None;
         let mut blob_id = Value::Null;
         let mut sha256 = Value::Null;
         let mut digest = Value::Null;
@@ -112,7 +114,7 @@ pub async fn agent_ledger(
                     fair_up = s["fair"]["up"].clone();
                 }
                 "strategist" => { proposal = s["proposal"].clone(); }
-                "risk_officer" => { verdict = s["review"]["verdict"].clone(); }
+                "risk_officer" => { verdict = s["review"]["verdict"].clone(); verdict_prob = s["review"]["calibration_adjusted_prob"].as_f64(); }
                 "walrus" => {
                     blob_id = s["blob_id"].clone();
                     sha256 = s["sha256"].clone();
@@ -128,7 +130,17 @@ pub async fn agent_ledger(
         let proposed_size = proposal["adjusted_size"].as_u64()
             .or(proposal["size"].as_u64()).unwrap_or(0);
         match outcome.as_str() {
-            "veto" => { veto += 1; protected += proposed_size; }
+            "veto" => {
+                veto += 1;
+                protected += proposed_size;
+                // Expected loss if this vetoed bet had been placed: use the
+                // gap between the Strategist's implied prob and the
+                // calibration-adjusted prob as the fraction of stake at risk.
+                let fair = fair_up.as_f64().unwrap_or(0.5);
+                let cal = verdict_prob.unwrap_or(fair);
+                let gap = (fair - cal).abs().max(0.39); // floor at the bucket's ~-39% ROI
+                expected_loss += proposed_size as f64 * gap;
+            }
             "no_bet" => { no_bet += 1; }
             "bet" => { bet += 1; }
             _ => {}
@@ -191,6 +203,7 @@ pub async fn agent_ledger(
             "no_bet": no_bet,
             "bet": bet,
             "protected_dusdc": protected,
+            "expected_loss_avoided": expected_loss.round() as u64,
         },
         "entries": entries,
     });

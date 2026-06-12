@@ -51,6 +51,7 @@ export default function LedgerPage() {
             <SummaryCard label="No bet" value={String(data.summary.no_bet)} />
             <SummaryCard label="Bets placed" value={String(data.summary.bet)} color="#16a34a" />
             <SummaryCard label="Capital protected" value={`${fmtDusdc(data.summary.protected_dusdc)} DUSDC`} color="#0284c7" sub="proposals the Risk Officer vetoed" />
+            <SummaryCard label="Expected loss avoided" value={`${fmtDusdc(data.summary.expected_loss_avoided || 0)} DUSDC`} color="#dc2626" sub="calibration-weighted, on the vetoed bets" />
           </div>
 
           {data.entries.length === 0 && (
