@@ -18,6 +18,32 @@ DeepBook Predict fixes the protocol side: it prices every strike and expiry agai
 
 ---
 
+## Why this is different from a trading bot
+
+The hard part of prediction markets is not placing trades -- plenty of
+bots do that. The hard part is **trusting an automated system with real
+money**. A keeper that prices a surface and fires orders is only as
+trustworthy as its operator's promise that it won't misbehave. DeepEdge
+takes the opposite stance: every layer is constrained and checkable.
+
+| | A typical auto-trading bot | DeepEdge |
+|---|---|---|
+| Places real on-chain trades | yes | yes |
+| Prices against an on-chain SVI/IV surface | yes | yes |
+| **A second agent that can veto the first** | no | **yes -- Risk Officer, using calibration** |
+| **On-chain spending limit it cannot bypass** | no | **yes -- hot-potato Mandate** |
+| **Formally verified the limit holds for all inputs** | no | **yes -- Sui Prover** |
+| **Every decision stored + hash-anchored, re-verifiable** | no | **yes -- Walrus + on-chain** |
+| **A public ledger of every call it ever made** | no | **yes -- the Ledger screen** |
+| Discloses its own negative-ROI / miscalibration | rarely | **yes, openly** |
+
+A bot says *trust me*. DeepEdge says *check me* -- and gives you the
+buttons to do it: re-hash any decision against Walrus in your browser,
+follow any real bet to suivision, and read the formal-verification proof
+that the spending cap can never be exceeded. That is the difference
+between automating trades and building an AI agent you can actually be
+accountable for.
+
 ## What DeepEdge does
 
 DeepEdge sits on top of DeepBook Predict and turns its on-chain volatility surface into something a trader can actually use:
