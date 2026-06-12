@@ -210,6 +210,9 @@ function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fa
           {timeUntil(market.expiry)}
         </span>
       </div>
+      <div style={{ marginTop: 2, fontSize: 12, color: "var(--text-muted)", textAlign: "right" }}>
+        {new Date(market.expiry).toISOString().slice(0, 10)}
+      </div>
       <div
         style={{
           marginTop: 14,
