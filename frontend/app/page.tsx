@@ -21,6 +21,7 @@ function timeUntil(expiryMs: number): string {
 export default function MarketsPage() {
   const [markets, setMarkets] = useState<MarketSummary[]>([]);
   const [fairMap, setFairMap] = useState<Record<string, number>>({});
+  const [atmMap, setAtmMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +38,7 @@ export default function MarketsPage() {
         Promise.allSettled(active.map((m) => api.strikes(m.oracle_id))).then(
           (results) => {
             const fm: Record<string, number> = {};
+            const am: Record<string, number> = {};
             results.forEach((r, i) => {
               if (r.status === "fulfilled") {
                 const g = r.value.grid;
@@ -45,9 +47,11 @@ export default function MarketsPage() {
                   Math.abs(best.strike_usd - g.atm_strike_usd) ? row : best,
                   g.strikes[0]);
                 fm[active[i].oracle_id] = atm.fair_up;
+                am[active[i].oracle_id] = g.atm_strike_usd;
               }
             });
             setFairMap(fm);
+            setAtmMap(am);
           }
         );
       })
@@ -120,7 +124,7 @@ export default function MarketsPage() {
             }}
           >
             {markets.map((m) => (
-              <MarketCard key={m.oracle_id} market={m} fair={fairMap[m.oracle_id]} isLargestEdge={m.oracle_id === largestEdgeId} />
+              <MarketCard key={m.oracle_id} market={m} fair={fairMap[m.oracle_id]} atm={atmMap[m.oracle_id]} isLargestEdge={m.oracle_id === largestEdgeId} />
             ))}
           </div>
         </>
@@ -129,7 +133,7 @@ export default function MarketsPage() {
   );
 }
 
-function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fair?: number; isLargestEdge?: boolean }) {
+function MarketCard({ market, fair, atm, isLargestEdge }: { market: MarketSummary; fair?: number; atm?: number; isLargestEdge?: boolean }) {
   return (
     <Link
       href={`/market/${market.oracle_id}`}
@@ -224,6 +228,9 @@ function MarketCard({ market, fair, isLargestEdge }: { market: MarketSummary; fa
           wordBreak: "break-all",
         }}
       >
+        {atm !== undefined && (
+          <span style={{ display: "block", marginBottom: 2 }}>ATM ${atm.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+        )}
         {market.oracle_id.slice(0, 18)}…
       </div>
     </div>
