@@ -78,6 +78,7 @@ export default function RootLayout({
               >
                 AI Agent
               </Link>
+          <Link href="/ledger">Ledger</Link>
             </nav>
           </div>
         </header>

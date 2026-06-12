@@ -178,6 +178,7 @@ export interface AgentStep {
   spent_amount?: number;
   digest?: string;
   vetoed?: boolean;
+  outcome?: string;
   reason?: string;
   error?: string;
 }
@@ -198,6 +199,30 @@ export interface MandateStatus {
   active: boolean;
 }
 
+
+export interface LedgerEntry {
+  ts: number;
+  outcome: string; // "veto" | "no_bet" | "bet" | "unknown"
+  market: { asset?: string; strike_usd?: number; expiry?: string; oracle_id?: string } | null;
+  fair_up: number | null;
+  proposal: { action?: string; size?: number; adjusted_size?: number; thesis?: string } | null;
+  verdict: string | null;
+  blob_id: string | null;
+  sha256: string | null;
+  digest: string | null;
+}
+export interface LedgerSummary {
+  total: number;
+  veto: number;
+  no_bet: number;
+  bet: number;
+  protected_dusdc: number;
+}
+export interface LedgerResponse {
+  summary: LedgerSummary;
+  entries: LedgerEntry[];
+}
+
 export const api = {
   markets: () => getJson<MarketsResponse>("/api/markets"),
   calibration: () => getJson<CalibrationReport>("/api/backtest/calibration"),
@@ -213,4 +238,5 @@ export const api = {
     getJson<ManagerSummary>(`/api/manager/summary?manager=${managerId}`),
   agentRun: () => postJson<AgentResult>("/api/agent/run"),
   agentStatus: () => getJson<MandateStatus>("/api/agent/status"),
+  agentLedger: () => getJson<LedgerResponse>("/api/agent/ledger"),
 };
