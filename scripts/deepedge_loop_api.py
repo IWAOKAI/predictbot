@@ -38,14 +38,36 @@ def claude(system, user, max_tokens=600):
 
 # ---- observe ----
 def observe(oid=None):
+    cal = get('/api/backtest/calibration')
     if oid is None:
+        # Pick the market with the largest edge: the ATM fair probability
+        # furthest from 0.50. That is where a Strategist sees the most to
+        # gain -- and, on this testnet, often exactly the 0.40-0.50 bucket
+        # where calibration shows the market is least trustworthy. The agent
+        # selects on edge; the Risk Officer then judges whether that edge is
+        # real. No market is hard-coded.
         mk = get('/api/markets')
         actives = [m for m in mk['markets'] if m.get('status') == 'active']
         if not actives:
             sys.exit('No active markets')
-        oid = actives[0]['oracle_id']
+        best = None
+        best_dist = -1.0
+        best_near = None
+        for m in actives:
+            try:
+                e = get(f"/api/markets/{m['oracle_id']}/edges")
+                g = e['edge_grid']
+                a = g['atm_strike_usd']
+                nr = min(g['strikes'], key=lambda s: abs(s['strike_usd'] - a))
+                dist = abs(nr['up']['fair'] - 0.5)
+                if dist > best_dist:
+                    best_dist, best, best_near = dist, e, nr
+            except Exception:
+                continue
+        if best is None:
+            sys.exit('No market with usable edges')
+        return best['oracle']['oracle_id'] if 'oracle_id' in best['oracle'] else actives[0]['oracle_id'], best['oracle'], best_near, cal
     edges = get(f'/api/markets/{oid}/edges')
-    cal = get('/api/backtest/calibration')
     grid = edges['edge_grid']
     atm = grid['atm_strike_usd']
     near = min(grid['strikes'], key=lambda s: abs(s['strike_usd'] - atm))
@@ -134,9 +156,7 @@ def run_cycle_json():
     result = {"ok": False, "steps": steps}
     try:
         # 1. observe
-        # Use a market in the 0.40-0.50 calibration bucket so the demo shows
-        # the Risk Officer actually using the calibration to veto.
-        oid, oracle, near, cal = observe("0x5b5f283a8decb5114958639a8d5903a925507eb65c75890c09dd7e4ef7801335")
+        oid, oracle, near, cal = observe(None)
         steps.append({"stage": "observe", "status": "done",
             "market": {"asset": oracle["underlying_asset"],
                        "expiry": oracle["expiry_iso"],
