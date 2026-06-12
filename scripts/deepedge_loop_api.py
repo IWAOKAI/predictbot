@@ -9,6 +9,21 @@ other; the Move Mandate is the final hard rail.
 """
 import json, os, sys, time, hashlib, subprocess, urllib.request
 
+LEDGER_PATH = "/root/deepedge/decisions/ledger.jsonl"
+
+def append_ledger(result):
+    """Append the full cycle result as one JSON line (audit trail).
+    Every decision -- bet, veto, or no_bet -- is preserved with its
+    Walrus blob_id and sha256, so the agent's whole history is auditable."""
+    try:
+        import os, time as _t
+        os.makedirs(os.path.dirname(LEDGER_PATH), exist_ok=True)
+        with open(LEDGER_PATH, "a") as _f:
+            _f.write(json.dumps({"ts": int(_t.time() * 1000), "result": result}) + "\n")
+    except Exception:
+        pass  # the ledger must never break the loop
+
+
 API = 'http://localhost:3000'
 PKG = '0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a'
 MANDATE = '0x753fb2e637d42067aeea59df6044ddfeb37ac22c92f28c89a8ffc6e3a4635f3a'
@@ -222,6 +237,7 @@ def run_cycle_json():
         result["final_size"] = size
     except Exception as e:
         result["error"] = str(e)
+    append_ledger(result)
     return result
 
 
