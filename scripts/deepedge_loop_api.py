@@ -9,6 +9,51 @@ other; the Move Mandate is the final hard rail.
 """
 import json, os, sys, time, hashlib, subprocess, urllib.request
 
+def notify_telegram(result):
+    """Push a one-line summary of the decision to Telegram, with the Walrus
+    blob and a verify link. Alert-only and non-custodial -- it never touches
+    funds, it just makes the agent's reasoning visible the moment it happens.
+    Fails silently so a notification problem can never break the loop."""
+    try:
+        import os, urllib.request, urllib.parse
+        token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        chat = os.environ.get("TELEGRAM_CHAT_ID")
+        if not token or not chat:
+            return
+        steps = result.get("steps", [])
+        outcome, market, fair, verdict, blob = "?", {}, None, "", None
+        for s in steps:
+            st = s.get("stage")
+            if st == "observe":
+                market = s.get("market", {})
+                fair = s.get("fair", {}).get("up")
+            elif st == "risk_officer":
+                verdict = (s.get("review", {}) or {}).get("verdict", "")
+            elif st == "walrus":
+                blob = s.get("blob_id")
+            elif st == "enforce":
+                outcome = s.get("outcome", "?")
+        icon = {"veto": "\U0001F6E1", "bet": "\u2705", "no_bet": "\u2796"}.get(outcome, "\u2139")
+        asset = market.get("asset", "?")
+        strike = market.get("strike_usd")
+        lines = [f"{icon} DeepEdge Agent \u2014 {outcome.upper()}"]
+        if strike and fair is not None:
+            lines.append(f"{asset} @ ${strike:,.0f} \u00b7 fair P(up) {fair:.3f}")
+        if verdict:
+            v = verdict if len(verdict) < 220 else verdict[:217] + "..."
+            lines.append(v)
+        if blob:
+            lines.append(f"Walrus: {blob[:16]}\u2026")
+        lines.append("Verify: http://localhost:3001/ledger")
+        text = "\n".join(lines)
+        data = urllib.parse.urlencode({"chat_id": chat, "text": text}).encode()
+        req = urllib.request.Request(
+            f"https://api.telegram.org/bot{token}/sendMessage", data=data)
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
+        pass  # notifications must never break the loop
+
+
 LEDGER_PATH = "/root/deepedge/decisions/ledger.jsonl"
 
 def append_ledger(result):
@@ -246,6 +291,7 @@ def run_cycle_json():
     # and no steps; recording it would put a broken '?' row in the ledger.
     if result.get("ok") and result.get("steps"):
         append_ledger(result)
+        notify_telegram(result)
     return result
 
 

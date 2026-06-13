@@ -238,6 +238,16 @@ This is the difference between an agent that trades and an agent you can
 hold accountable: not just *what* it did, but *why*, provably, for every
 single decision it ever made.
 
+### Telegram notifications (non-custodial, alert-only)
+
+The agent can push every decision to Telegram the moment it happens -- the
+market, the Risk Officer's verdict, the Walrus blob, and a link to verify
+the hash yourself. This is deliberately the opposite of a custodial trading
+bot: DeepEdge never holds your funds and never trades on your behalf from a
+chat. The notification only makes the agent's reasoning visible and
+checkable in real time. Credentials live in a chmod-600 env file and are
+git-ignored.
+
 ### On-chain proof (testnet)
 
 - Mandate package: `0xb82750b35a213320d5ad6204e7bce46493ae76340e2a018fd65fdca4ad08f34a`
