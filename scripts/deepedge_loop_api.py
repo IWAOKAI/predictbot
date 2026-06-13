@@ -72,6 +72,10 @@ def observe(oid=None):
             try:
                 e = get(f"/api/markets/{m['oracle_id']}/edges")
                 g = e['edge_grid']
+                # Skip markets whose on-chain price is stale (>6h): a frozen
+                # spot produces a fake edge. The agent only trades on fresh data.
+                if g.get('price_age_seconds', 10**9) > 21600:
+                    continue
                 a = g['atm_strike_usd']
                 nr = min(g['strikes'], key=lambda s: abs(s['strike_usd'] - a))
                 dist = abs(nr['up']['fair'] - 0.5)
