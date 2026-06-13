@@ -10,16 +10,23 @@ other; the Move Mandate is the final hard rail.
 import json, os, sys, time, hashlib, subprocess, urllib.request
 
 def notify_telegram(result):
-    """Push a one-line summary of the decision to Telegram, with the Walrus
-    blob and a verify link. Alert-only and non-custodial -- it never touches
-    funds, it just makes the agent's reasoning visible the moment it happens.
-    Fails silently so a notification problem can never break the loop."""
+    """Push a concise Markdown summary of the decision to Telegram, with the
+    Walrus blob and a verify link. Alert-only and non-custodial -- it never
+    touches funds, it just makes the agent's reasoning visible and checkable
+    the moment it happens. Fails silently so it can never break the loop."""
     try:
         import os, urllib.request, urllib.parse
         token = os.environ.get("TELEGRAM_BOT_TOKEN")
         chat = os.environ.get("TELEGRAM_CHAT_ID")
         if not token or not chat:
             return
+
+        def esc(s):
+            # Escape MarkdownV2 reserved characters.
+            for ch in r"_*[]()~`>#+-=|{}.!":
+                s = s.replace(ch, "\\" + ch)
+            return s
+
         steps = result.get("steps", [])
         outcome, market, fair, verdict, blob = "?", {}, None, "", None
         for s in steps:
@@ -33,20 +40,41 @@ def notify_telegram(result):
                 blob = s.get("blob_id")
             elif st == "enforce":
                 outcome = s.get("outcome", "?")
+
         icon = {"veto": "\U0001F6E1", "bet": "\u2705", "no_bet": "\u2796"}.get(outcome, "\u2139")
         asset = market.get("asset", "?")
         strike = market.get("strike_usd")
-        lines = [f"{icon} DeepEdge Agent \u2014 {outcome.upper()}"]
+
+        # Short verdict: first sentence only, then escaped.
+        short = verdict.split(". ")[0].strip() if verdict else ""
+        if short and not short.endswith("."):
+            short += "."
+        if len(short) > 180:
+            short = short[:177] + "..."
+
+        lines = [f"{icon} *DeepEdge Agent \u2014 {esc(outcome.upper())}*", ""]
         if strike and fair is not None:
-            lines.append(f"{asset} @ ${strike:,.0f} \u00b7 fair P(up) {fair:.3f}")
-        if verdict:
-            v = verdict if len(verdict) < 220 else verdict[:217] + "..."
-            lines.append(v)
+            lines.append(f"*{esc(asset)}* @ ${esc(f'{strike:,.0f}')}")
+            lines.append(f"fair P\\(up\\): `{fair:.3f}`")
+            lines.append("")
+        if short:
+            label = {"veto": "\U0001F6D1 *Risk Officer:* VETO",
+                     "bet": "\u2705 *Approved \u2014 bet placed*",
+                     "no_bet": "\u2796 *No bet*"}.get(outcome, "*Decision*")
+            lines.append(label)
+            lines.append(f"_{esc(short)}_")
+            lines.append("")
         if blob:
-            lines.append(f"Walrus: {blob[:16]}\u2026")
-        lines.append("Verify: http://localhost:3001/ledger")
+            lines.append(f"\U0001F4DD Walrus `{esc(blob[:16])}\u2026`")
+        lines.append("\U0001F50D Verify on the Ledger")
+
         text = "\n".join(lines)
-        data = urllib.parse.urlencode({"chat_id": chat, "text": text}).encode()
+        data = urllib.parse.urlencode({
+            "chat_id": chat,
+            "text": text,
+            "parse_mode": "MarkdownV2",
+            "disable_web_page_preview": "true",
+        }).encode()
         req = urllib.request.Request(
             f"https://api.telegram.org/bot{token}/sendMessage", data=data)
         urllib.request.urlopen(req, timeout=10)
