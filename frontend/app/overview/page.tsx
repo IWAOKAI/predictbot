@@ -7,6 +7,7 @@ import { api, MarketSummary, StrikesResponse } from "@/lib/api";
 interface Row {
   market: MarketSummary;
   spot: number;
+  priceAgeSeconds: number;
   atmFairUp: number;
   atmIv: number;
   minsLeft: number;
@@ -42,6 +43,7 @@ export default function OverviewPage() {
             built.push({
               market: activeMarkets[i],
               spot: s.grid.spot_usd,
+              priceAgeSeconds: s.grid.price_age_seconds ?? 0,
               atmFairUp: atm.fair_up,
               atmIv: atm.implied_vol_annualized,
               minsLeft: Math.floor(s.grid.seconds_until_expiry / 60),
@@ -127,6 +129,11 @@ export default function OverviewPage() {
                     </td>
                     <td style={{ padding: "10px 14px", textAlign: "right" }}>
                       ${r.spot.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      {r.priceAgeSeconds > 21600 && (
+                        <span title="On-chain price is stale; the agent skips this market" style={{ marginLeft: 6, fontSize: 11, color: "#b45309", fontWeight: 700, whiteSpace: "nowrap" }}>
+                          ⚠ {Math.round(r.priceAgeSeconds / 3600)}h old
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: "10px 14px", textAlign: "right", color: "var(--up)", fontWeight: 600 }}>
                       {(r.atmFairUp * 100).toFixed(1)}%

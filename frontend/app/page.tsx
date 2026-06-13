@@ -22,6 +22,7 @@ export default function MarketsPage() {
   const [markets, setMarkets] = useState<MarketSummary[]>([]);
   const [fairMap, setFairMap] = useState<Record<string, number>>({});
   const [atmMap, setAtmMap] = useState<Record<string, number>>({});
+  const [ageMap, setAgeMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,7 @@ export default function MarketsPage() {
           (results) => {
             const fm: Record<string, number> = {};
             const am: Record<string, number> = {};
+            const ag: Record<string, number> = {};
             results.forEach((r, i) => {
               if (r.status === "fulfilled") {
                 const g = r.value.grid;
@@ -48,10 +50,12 @@ export default function MarketsPage() {
                   g.strikes[0]);
                 fm[active[i].oracle_id] = atm.fair_up;
                 am[active[i].oracle_id] = g.atm_strike_usd;
+                ag[active[i].oracle_id] = g.price_age_seconds ?? 0;
               }
             });
             setFairMap(fm);
             setAtmMap(am);
+            setAgeMap(ag);
           }
         );
       })
@@ -124,7 +128,7 @@ export default function MarketsPage() {
             }}
           >
             {markets.map((m) => (
-              <MarketCard key={m.oracle_id} market={m} fair={fairMap[m.oracle_id]} atm={atmMap[m.oracle_id]} isLargestEdge={m.oracle_id === largestEdgeId} />
+              <MarketCard key={m.oracle_id} market={m} fair={fairMap[m.oracle_id]} atm={atmMap[m.oracle_id]} priceAge={ageMap[m.oracle_id]} isLargestEdge={m.oracle_id === largestEdgeId} />
             ))}
           </div>
         </>
@@ -133,7 +137,7 @@ export default function MarketsPage() {
   );
 }
 
-function MarketCard({ market, fair, atm, isLargestEdge }: { market: MarketSummary; fair?: number; atm?: number; isLargestEdge?: boolean }) {
+function MarketCard({ market, fair, atm, priceAge, isLargestEdge }: { market: MarketSummary; fair?: number; atm?: number; priceAge?: number; isLargestEdge?: boolean }) {
   return (
     <Link
       href={`/market/${market.oracle_id}`}
@@ -230,6 +234,9 @@ function MarketCard({ market, fair, atm, isLargestEdge }: { market: MarketSummar
       >
         {atm !== undefined && (
           <span style={{ display: "block", marginBottom: 2 }}>ATM ${atm.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+        )}
+        {priceAge !== undefined && priceAge > 21600 && (
+          <span title="On-chain price is stale; the agent skips this market" style={{ display: "block", marginBottom: 2, fontSize: 11, color: "#b45309", fontWeight: 700 }}>⚠ stale price ({Math.round(priceAge / 3600)}h old)</span>
         )}
         {market.oracle_id.slice(0, 18)}…
       </div>

@@ -80,6 +80,7 @@ export interface StrikeGrid {
   spot_usd: number;
   forward_usd: number;
   seconds_until_expiry: number;
+  price_age_seconds?: number;
   atm_strike_usd: number;
   strikes: StrikeRow[];
 }
