@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { api, LedgerEntry, LedgerResponse } from "@/lib/api";
 
-const WAL_AGG = "https://aggregator.walrus-testnet.walrus.space/v1/blobs/";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3000";
+const WAL_AGG = API_BASE + "/api/walrus/"; // backend proxy (aggregator 404s on browser Origin)
 
 function fmtDusdc(micro: number): string {
   return (micro / 1_000_000).toFixed(2);

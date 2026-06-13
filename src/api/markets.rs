@@ -328,6 +328,42 @@ pub async fn get_calendar_health(
 }
 
 
+/// GET /api/walrus/:blob_id
+/// Server-side proxy for Walrus blobs. The public testnet aggregator
+/// returns 404 when a browser sends an Origin header, so we fetch the blob
+/// here (no Origin) and stream the raw bytes back. This lets the Ledger's
+/// in-browser Verify-hash button re-hash the exact stored bytes over a
+/// same-origin request.
+pub async fn get_walrus_blob(
+    Path(blob_id): Path<String>,
+) -> Result<axum::response::Response, (StatusCode, String)> {
+    let url = format!("https://aggregator.walrus-testnet.walrus.space/v1/blobs/{}", blob_id);
+    let client = reqwest::Client::new();
+    let resp = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    if !resp.status().is_success() {
+        return Err((StatusCode::NOT_FOUND, format!("walrus aggregator returned {}", resp.status())));
+    }
+
+    let bytes = resp
+        .bytes()
+        .await
+        .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+
+    use axum::response::IntoResponse;
+    let mut response = bytes.to_vec().into_response();
+    response.headers_mut().insert(
+        axum::http::header::CONTENT_TYPE,
+        axum::http::HeaderValue::from_static("application/octet-stream"),
+    );
+    Ok(response)
+}
+
+
 #[derive(Deserialize)]
 pub struct ManagerQuery {
     pub owner: String,
