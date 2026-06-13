@@ -241,7 +241,11 @@ def run_cycle_json():
         result["final_size"] = size
     except Exception as e:
         result["error"] = str(e)
-    append_ledger(result)
+    # Only record complete, successful cycles. A cycle that died mid-way
+    # (e.g. a transient 502 while the backend was restarting) has ok=False
+    # and no steps; recording it would put a broken '?' row in the ledger.
+    if result.get("ok") and result.get("steps"):
+        append_ledger(result)
     return result
 
 

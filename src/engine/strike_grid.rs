@@ -33,6 +33,7 @@ pub struct StrikeGrid {
     pub spot_usd: f64,
     pub forward_usd: f64,
     pub seconds_until_expiry: i64,
+    pub price_age_seconds: i64,
     pub atm_strike_usd: f64,
     pub strikes: Vec<StrikeFairProbability>,
 }
@@ -112,6 +113,7 @@ pub fn compute_strike_grid(
         spot_usd: spot,
         forward_usd: forward,
         seconds_until_expiry: oracle.seconds_until_expiry(now_ms),
+        price_age_seconds: (now_ms - price.onchain_timestamp) / 1000,
         atm_strike_usd: atm,
         strikes,
     }
