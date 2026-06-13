@@ -96,6 +96,8 @@ DeepEdge's real value is to **surface** where the market is reliable and where i
 
 ### Arbitrage-free surface checks (butterfly + calendar)
 
+![SVI smile with a live arbitrage-free badge (butterfly g(k) >= 0)](docs/screenshots/surface.png)
+
 DeepEdge doesn't just read the SVI surface -- it checks the surface is
 *coherent*. From the on-chain Gatheral SVI parameters it computes the
 analytic first and second derivatives of total variance and evaluates
@@ -137,6 +139,8 @@ observe market + fair value + calibration
 ```
 
 ### Two agents, and one can say no
+
+![The AI agent loop: Strategist proposes, Risk Officer vetoes on calibration, Walrus stores, hash verifies, Mandate enforces](docs/screenshots/agent.png)
 
 Two Claude agents split the decision. The **Strategist** proposes a bet
 to maximise expected value. A separate **Risk Officer** reviews that
@@ -219,6 +223,8 @@ position was taken. This is the accountability real financial decisions
 demand.
 
 ### The ledger: every decision, auditable forever
+
+![Agent Performance Ledger -- every decision auditable, hash re-verified in-browser](docs/screenshots/ledger.png)
 
 Each cycle -- whether it ends in a bet, a veto, or a no-bet -- is appended
 to a persistent ledger with the market observed, both agents' reasoning,
