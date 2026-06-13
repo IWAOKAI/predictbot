@@ -159,7 +159,21 @@ function LedgerCard({ entry, index }: { entry: LedgerEntry; index: number }) {
         </div>
       )}
 
-      {entry.blob_id && entry.sha256 && (
+      {(() => {
+        const oc = entry.digest || (entry as unknown as { onchain_digest?: string }).onchain_digest;
+        // Bets that hit the chain are verified by their on-chain tx (the
+        // original Walrus blob may have expired on testnet). Vetoes/no-bets
+        // are verified by re-hashing their Walrus record in-browser.
+        if (oc) {
+          return (
+            <div style={{ marginTop: 10, fontSize: 13, color: "#15803d", fontWeight: 700 }}>
+              ✓ verified on-chain — see the suivision link above
+            </div>
+          );
+        }
+        return null;
+      })()}
+      {!entry.digest && !(entry as unknown as { onchain_digest?: string }).onchain_digest && entry.blob_id && entry.sha256 && (
         <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <button
             onClick={runVerify}
